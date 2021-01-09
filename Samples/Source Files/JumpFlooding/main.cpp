@@ -89,7 +89,14 @@ int main() {
 	pipeline->addTexelBuffer(seeds, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 	pipeline->addUniformBuffer(passNumber, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 
-	showPass->addSubPass({ pipeline }, RenderPassFlag::SHOW_ON_SCREEN | RenderPassFlag::USE_COLOR | RenderPassFlag::USE_DEPTH | RenderPassFlag::OP_STORE_COLOR);
+	SubpassAttachment SA;
+	SA.showOnScreen = true;
+	SA.nbColor = 1;
+	SA.storeColor = true;
+	SA.useDepth = true;
+	SA.showOnScreenIndex = 0;
+
+	showPass->addSubPass({ pipeline }, SA);
 
 	showPass->compile();
 

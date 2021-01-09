@@ -95,7 +95,14 @@ int main() {
 	constant->addVariable("camera", &camera);
 	teapotPipeline->addPushContant(constant, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-	pass.addSubPass({ skybox, teapotPipeline }, RenderPassFlag::SHOW_ON_SCREEN | RenderPassFlag::USE_COLOR | RenderPassFlag::USE_DEPTH | RenderPassFlag::OP_STORE_COLOR);
+	SubpassAttachment SA;
+	SA.showOnScreen = true;
+	SA.nbColor = 1;
+	SA.storeColor = true;
+	SA.useDepth = true;
+	SA.showOnScreenIndex = 0;
+
+	pass.addSubPass({ skybox, teapotPipeline }, SA);
 	pass.addDependencies(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 	pass.addDependencies(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 	pass.compile();

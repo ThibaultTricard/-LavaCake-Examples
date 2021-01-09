@@ -126,7 +126,12 @@ int main() {
 	skyRenderPipeline->addTextureBuffer(skyCubeMap, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 	skyRenderPipeline->SetCullMode(VK_CULL_MODE_FRONT_BIT);
 
-	renderPass.addSubPass({ sphereRenderPipeline,skyRenderPipeline }, RenderPassFlag::USE_COLOR | RenderPassFlag::USE_DEPTH | RenderPassFlag::OP_STORE_COLOR);
+	SubpassAttachment SA;
+	SA.nbColor = 1;
+	SA.storeColor = true;
+	SA.useDepth = true;
+
+	renderPass.addSubPass({ sphereRenderPipeline,skyRenderPipeline }, SA);
 
 	GraphicPipeline* postProcessPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 	VertexShaderModule* postProcessVertex = new VertexShaderModule("Data/Shaders/PostProcess/postprocess.vert.spv");
@@ -142,7 +147,15 @@ int main() {
 	
 	postProcessPipeline->addAttachment(colorAttachemnt, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 
-	renderPass.addSubPass({ postProcessPipeline }, RenderPassFlag::SHOW_ON_SCREEN | RenderPassFlag::USE_COLOR | RenderPassFlag::OP_STORE_COLOR | RenderPassFlag::ADD_INPUT, { 0 });
+
+	SA = SubpassAttachment();
+	SA.showOnScreen = true;
+	SA.nbColor = 1;
+	SA.storeColor = true;
+	SA.showOnScreenIndex = 0;
+	SA.addInput = true;
+
+	renderPass.addSubPass({ postProcessPipeline }, SA, { 0 });
 
 	renderPass.addDependencies(
 		0,
