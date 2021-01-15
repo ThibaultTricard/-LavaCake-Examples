@@ -14,7 +14,7 @@ int main() {
 
 
 	Window w("LavaCake : SSAO", 1280, 720);
-	glfwSetWindowPos(w.m_window, 2000, 100);
+	//glfwSetWindowPos(w.m_window, 2000, 100);
 	Mouse* mouse = Mouse::getMouse();
 	Device* d = Device::getDevice();
 	d->initDevices(0, 1, w.m_windowParams);
