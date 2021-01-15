@@ -14,17 +14,16 @@ int main() {
 
 
 	Window w("LavaCake : SSAO", 512, 512);
+	glfwSetWindowPos(w.m_window, 2000, 100);
 	Mouse* mouse = Mouse::getMouse();
 	Device* d = Device::getDevice();
 	d->initDevices(0, 1, w.m_windowParams);
 	SwapChain* s = SwapChain::getSwapChain();
 	s->init();
-
 	Queue* graphicQueue = d->getGraphicQueue(0);
-
 	CommandBuffer cmdBuf;
 	cmdBuf.addSemaphore();
-
+	VkExtent2D size = s->size();
 
 	auto knight = Load3DModelFromObjFile("Data/Models/StrollingKnight.obj", true, true);
 	Mesh_t* knightMesh = new IndexedMesh<TRIANGLE>(knight.first.first, knight.first.second, knight.second);
@@ -32,12 +31,11 @@ int main() {
 	VertexBuffer* vertexBuffer = new VertexBuffer({ knightMesh });
 	vertexBuffer->allocate(graphicQueue, cmdBuf);
 
-	VkExtent2D size = s->size();
 
-	//PushConstant
-	PushConstant* constant = new PushConstant();
-	vec4f LigthPos = vec4f({ 0.f,4.f,0.7f,0.0 });
-	constant->addVariable("LigthPos", &LigthPos);
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//																					Gbuffer																										//
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 	//uniform buffer
 	UniformBuffer* b = new UniformBuffer();
@@ -52,15 +50,14 @@ int main() {
 	RenderPass Gpass;
 	GraphicPipeline* Gpipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
-	VertexShaderModule* Gvertex = new  VertexShaderModule("Data/Shaders/SSAO/shader.vert.spv");
+	VertexShaderModule* Gvertex = new  VertexShaderModule("Data/Shaders/SSAO/Gbuffer.vert.spv");
 	Gpipeline->setVextexShader(Gvertex);
 
-	FragmentShaderModule* Gfragment = new  FragmentShaderModule("Data/Shaders/SSAO/shader.frag.spv");
+	FragmentShaderModule* Gfragment = new  FragmentShaderModule("Data/Shaders/SSAO/Gbuffer.frag.spv");
 	Gpipeline->setFragmentModule(Gfragment);
 
 
 	Gpipeline->setVertices(vertexBuffer);
-	Gpipeline->addPushContant(constant, VK_SHADER_STAGE_FRAGMENT_BIT);
 	Gpipeline->addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
 
 	
@@ -70,8 +67,7 @@ int main() {
 	SA.storeColor = true;
 	SA.useDepth = true;
 	SA.storeDepth = true;
-	SA.showOnScreenIndex = 0;
-	//Gpipeline->SetCullMode(VK_CULL_MODE_FRONT_BIT);
+	SA.showOnScreenIndex = 2;
 
 	Gpass.addSubPass({Gpipeline}, SA);
 	Gpass.addDependencies(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT);
@@ -81,6 +77,32 @@ int main() {
 
 	FrameBuffer* G = new FrameBuffer(size.width, size.height);
 	Gpass.prepareOutputFrameBuffer(*G);
+
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//																					SSAO																											//
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//																					Blur																											//
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//																					Lightig																										//
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	//PushConstant
+	PushConstant* constant = new PushConstant();
+	vec4f LigthPos = vec4f({ 0.f,4.f,0.7f,0.0 });
+	constant->addVariable("LigthPos", &LigthPos);
 
 
 

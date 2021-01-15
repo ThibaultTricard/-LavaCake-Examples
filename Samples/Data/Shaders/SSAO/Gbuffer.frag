@@ -3,10 +3,6 @@
 layout( location = 0 ) in vec3 vert_position;
 layout( location = 1 ) in vec3 vert_normal;
 
-layout( push_constant ) uniform LightParameters {
-  vec4 Position;
-} Light;
-
 layout( location = 0 ) out vec4 O_position;
 layout( location = 1 ) out vec4 O_normal;
 layout( location = 2 ) out vec4 O_albedo;
