@@ -13,7 +13,7 @@ using namespace LavaCake::Core;
 int main() {
 
 
-	Window w("LavaCake : SSAO", 512, 512);
+	Window w("LavaCake : SSAO", 1280, 720);
 	glfwSetWindowPos(w.m_window, 2000, 100);
 	Mouse* mouse = Mouse::getMouse();
 	Device* d = Device::getDevice();
@@ -67,7 +67,7 @@ int main() {
 	SA.storeColor = true;
 	SA.useDepth = true;
 	SA.storeDepth = true;
-	SA.showOnScreenIndex = 2;
+	SA.showOnScreenIndex = 1;
 
 	Gpass.addSubPass({Gpipeline}, SA);
 	Gpass.addDependencies(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT);
