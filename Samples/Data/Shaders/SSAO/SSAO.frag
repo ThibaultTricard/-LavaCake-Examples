@@ -6,15 +6,18 @@ layout( location = 0 ) out vec4 FragColor;
 
 layout(set = 0, binding = 0) uniform sampler2D gPosition;
 layout(set = 0, binding = 1) uniform sampler2D gNormal;
+layout(set = 0, binding = 2) uniform sampler2D gDepth;
 
 layout(set = 0, binding = 4) uniform UniformBuffer{
-	vec3 samples[64];
+	vec4 samples[64];
 	mat4 projection;
+    float radius;
+    vec4 seed[16];
 };
 
 
 int kernelSize = 64;
-float radius = 0.5;
+
 float bias = 0.025;
 
 void main() {
@@ -23,7 +26,12 @@ void main() {
     vec3 fragPos = texture(gPosition, uv).xyz;
     vec3 normal = normalize(texture(gNormal, uv).rgb);
     //vec3 randomVec = normalize(texture(texNoise, uv * noiseScale).xyz);
-    vec3 randomVec= vec3(0.0);
+    
+    ivec2 t = textureSize(gNormal,0);
+    ivec2 S = ivec2(uv * t);
+    int s = (S.x %4) * 4 + (S.y%4);
+
+    vec3 randomVec= seed[s].xyz;
 
     // create TBN change-of-basis matrix: from tangent-space to view-space
     vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));
@@ -34,7 +42,7 @@ void main() {
     for(int i = 0; i < kernelSize; ++i)
     {
         // get sample position
-        vec3 samplePos = TBN * samples[i]; // from tangent to view-space
+        vec3 samplePos = TBN * samples[i].xyz; // from tangent to view-space
         samplePos = fragPos + samplePos * radius; 
         
         // project sample position (to sample texture) (to get position on screen/texture)
