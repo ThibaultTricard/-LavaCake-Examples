@@ -32,7 +32,7 @@ int main() {
 
 	ImGuiWrapper* gui = new ImGuiWrapper();
 	gui->initGui(&w, d->getGraphicQueue(0), &cmdBuf);
-	auto knight = Load3DModelFromObjFile("Data/Models/buddha.obj", true, true);
+	auto knight = Load3DModelFromObjFile("Data/Models/StrollingKnight.obj", true, true);
 	Mesh_t* knightMesh = new IndexedMesh<TRIANGLE>(knight.first.first, knight.first.second, knight.second);
 
 	VertexBuffer* vertexBuffer = new VertexBuffer({ knightMesh });
