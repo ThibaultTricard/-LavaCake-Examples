@@ -149,10 +149,10 @@ int main() {
 
 	float radius = 0.5;
 
-	SSAOuni->addVariable("samples", samples);
+	SSAOuni->addVariable("samples", &samples);
 	SSAOuni->addVariable("projection", &proj);
 	SSAOuni->addVariable("radius", radius);
-	SSAOuni->addVariable("seed", randomVectors);
+	SSAOuni->addVariable("seed", &randomVectors);
 	SSAOuni->end();
 
 
