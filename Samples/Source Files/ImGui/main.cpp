@@ -43,7 +43,7 @@ int main() {
 	VertexShaderModule* vertexShader = new VertexShaderModule("Data/Shaders/helloworld/shader.vert.spv");
 	FragmentShaderModule* fragmentShader = new FragmentShaderModule("Data/Shaders/helloworld/shader.frag.spv");
 
-	pipeline->setVextexShader(vertexShader);
+	pipeline->setVextexModule(vertexShader);
 	pipeline->setFragmentModule(fragmentShader);
 	pipeline->setVertices(triangle_vertex_buffer);
 
@@ -158,15 +158,13 @@ int main() {
 
 		pass->setSwapChainImage(*frameBuffers[f], image);
 
-		pass->draw(commandBuffer[f].getHandle(), frameBuffers[f]->getHandle(), vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
+		pass->draw(commandBuffer[f], *frameBuffers[f], vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
 
 
 		commandBuffer[f].endRecord();
 
+		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(0) });
 		
-		if (!SubmitCommandBuffersToQueue(queue->getHandle() , wait_semaphore_infos, { commandBuffer[f].getHandle() }, { commandBuffer[f].getSemaphore(0) }, commandBuffer[f].getFence())) {
-			continue;
-		}
 
 
 		PresentInfo present_info = {

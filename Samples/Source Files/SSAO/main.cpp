@@ -49,8 +49,8 @@ int main() {
 	mat4 proj = Helpers::PreparePerspectiveProjectionMatrix(static_cast<float>(size.width) / static_cast<float>(size.height),
 		50.0f, 0.01f, 5.0f);
 	mat4 modelView = Helpers::PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
-	b->addVariable("modelView", &modelView);
-	b->addVariable("projection", &proj);
+	b->addVariable("modelView", modelView);
+	b->addVariable("projection", proj);
 	b->end();
 
 
@@ -58,7 +58,7 @@ int main() {
 	GraphicPipeline* Gpipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
 	VertexShaderModule* Gvertex = new  VertexShaderModule("Data/Shaders/SSAO/Gbuffer.vert.spv");
-	Gpipeline->setVextexShader(Gvertex);
+	Gpipeline->setVextexModule(Gvertex);
 
 	FragmentShaderModule* Gfragment = new  FragmentShaderModule("Data/Shaders/SSAO/Gbuffer.frag.spv");
 	Gpipeline->setFragmentModule(Gfragment);
@@ -113,7 +113,7 @@ int main() {
 
 	UniformBuffer* SSAOuni = new UniformBuffer();
 
-	std::vector<Data*> samples;
+	std::array<vec4f, 64> samples;
 	srand(time(NULL));
 	for (unsigned int i = 0; i < 64; i++)
 	{
@@ -128,10 +128,10 @@ int main() {
 		scale = lerp(0.1f, 1.0f, scale * scale);
 		noise =noise * scale;
 
-		samples.push_back(new vec4f({ noise[0], noise[1], noise[2],0.0 }));
+		samples[i] = vec4f({ noise[0], noise[1], noise[2],0.0 });
 	}
 
-	std::vector<Data*> randomVectors;
+	std::array<vec4f, 16> randomVectors;
 	srand(time(NULL));
 	for (unsigned int i = 0; i < 16; i++)
 	{
@@ -143,16 +143,16 @@ int main() {
 		noise = Normalize(noise) ;
 
 
-		randomVectors.push_back(new vec4f({ noise[0], noise[1], noise[2],0.0 }));
+		randomVectors[i] =  vec4f({ noise[0], noise[1], noise[2],0.0 });
 	}
 
 
 	float radius = 0.5;
 
-	SSAOuni->addVariable("samples", &samples);
-	SSAOuni->addVariable("projection", &proj);
+	SSAOuni->addVariable("samples", samples);
+	SSAOuni->addVariable("projection", proj);
 	SSAOuni->addVariable("radius", radius);
-	SSAOuni->addVariable("seed", &randomVectors);
+	SSAOuni->addVariable("seed", randomVectors);
 	SSAOuni->end();
 
 
@@ -171,7 +171,7 @@ int main() {
 
 	SSAOpipeline->addUniformBuffer(SSAOuni, VK_SHADER_STAGE_FRAGMENT_BIT, 4);
 
-	SSAOpipeline->setVextexShader(SSAOvertex);
+	SSAOpipeline->setVextexModule(SSAOvertex);
 	SSAOpipeline->setFragmentModule(SSAOfragment);
 	//SSAOpipeline->SetCullMode();
 
@@ -205,7 +205,7 @@ int main() {
 	VertexShaderModule* blurVert = new VertexShaderModule("Data/Shaders/SSAO/blur.vert.spv");
 	FragmentShaderModule* blurFrag = new FragmentShaderModule("Data/Shaders/SSAO/blur.frag.spv");
 
-	blurPipeline.setVextexShader(blurVert);
+	blurPipeline.setVextexModule(blurVert);
 	blurPipeline.setFragmentModule(blurFrag);
 
 	blurPipeline.addFrameBuffer(SSAO,VK_SHADER_STAGE_FRAGMENT_BIT, 0, 0);
@@ -229,8 +229,8 @@ int main() {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	UniformBuffer lightbuffer;
-	lightbuffer.addVariable("position", &vec4f({ 0.0,0.0,0.0,0.0 }));
-	lightbuffer.addVariable("color", &vec4f({ 1.0,1.0,1.0,0.0 }));
+	lightbuffer.addVariable("position", vec4f({ 0.0,0.0,0.0,0.0 }));
+	lightbuffer.addVariable("color", vec4f({ 1.0,1.0,1.0,0.0 }));
 	lightbuffer.end();
 
 
@@ -244,7 +244,7 @@ int main() {
 	VertexShaderModule* lightingVert = new VertexShaderModule("Data/Shaders/SSAO/lighting.vert.spv");
 	FragmentShaderModule* lightingFrag = new FragmentShaderModule("Data/Shaders/SSAO/lighting.frag.spv");
 
-	lightingPipeline.setVextexShader(lightingVert);
+	lightingPipeline.setVextexModule(lightingVert);
 	lightingPipeline.setFragmentModule(lightingFrag);
 
 	lightingPipeline.addFrameBuffer(G, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 0);
@@ -272,7 +272,7 @@ int main() {
 	//PushConstant
 	PushConstant* constant = new PushConstant();
 	vec4f LigthPos = vec4f({ 0.f,4.f,0.7f,0.0 });
-	constant->addVariable("LigthPos", &LigthPos);
+	constant->addVariable("LigthPos", LigthPos);
 
 
 
@@ -316,7 +316,7 @@ int main() {
 			modelView = modelView * Helpers::PrepareRotationMatrix(polars[0], vec3f({ 0 , 1, 0 }));
 			modelView = modelView * Helpers::PrepareRotationMatrix(polars[1], vec3f({ 1 , 0, 0 }));
 			//std::cout << w.m_mouse.position[0] << std::endl;
-			b->setVariable("modelView", &modelView);
+			b->setVariable("modelView", modelView);
 			lastMousePos = new vec2d({ mouse->position[0], mouse->position[1] });
 		}
 		else {
@@ -349,37 +349,35 @@ int main() {
 
 
 		SSAOuni->setVariable("radius", radius);
-		SSAOuni->update(cmdBuf.getHandle());
+		SSAOuni->update(cmdBuf);
 
-		lightbuffer.setVariable("position", &vec4f({ x,y,z,0.0 }));
-		lightbuffer.setVariable("color", &vec4f({ red,green,blue,0.0 }));
-		lightbuffer.update(cmdBuf.getHandle());
+		lightbuffer.setVariable("position", vec4f({ x,y,z,0.0 }));
+		lightbuffer.setVariable("color", vec4f({ red,green,blue,0.0 }));
+		lightbuffer.update(cmdBuf);
 
 		if (updateUniform) {
-			b->update(cmdBuf.getHandle());
+			b->update(cmdBuf);
 			updateUniform = false;
 		}
 
 
 		
 
-		Gpass.draw(cmdBuf.getHandle(), G->getHandle(), vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
+		Gpass.draw(cmdBuf, *G, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
 
 
 		
-		SSAORenderPass->draw(cmdBuf.getHandle(), SSAO->getHandle(), vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
+		SSAORenderPass->draw(cmdBuf, *SSAO, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
 
 		
-		Blurpass->draw(cmdBuf.getHandle(), BlurBuffer->getHandle(), vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
+		Blurpass->draw(cmdBuf, *BlurBuffer, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
 
 		Lightingpass->setSwapChainImage(*lightingBuffer, swapChainImage);
-		Lightingpass->draw(cmdBuf.getHandle(), lightingBuffer->getHandle(), vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
+		Lightingpass->draw(cmdBuf, *lightingBuffer, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
 
 		cmdBuf.endRecord();
-
-		if (!SubmitCommandBuffersToQueue(graphicQueue->getHandle(), wait_semaphore_infos, { cmdBuf.getHandle() }, { cmdBuf.getSemaphore(0) }, cmdBuf.getFence())) {
-			continue;
-		}
+		cmdBuf.submit(graphicQueue, wait_semaphore_infos, { cmdBuf.getSemaphore(0) });
+		
 
 		PresentInfo present_info = {
 			swapchain,                                    // VkSwapchainKHR         Swapchain

@@ -56,15 +56,15 @@ int main() {
 		50.0f, 0.5f, 10.0f);
 	mat4 modelView = mat4({ 0.9981f, -0.0450f, 0.0412f, 0.0000f, 0.0000f, 0.6756f, 0.7373f, 0.0000f, -0.0610f, -0.7359f, 0.6743f, 0.0000f, -0.0000f, -0.0000f, -4.0000f, 1.0000f });
 	mat4 lightView = mat4({ 1.0f,0.0f,0.0f,0.0f,0.0f,0.173648223f ,0.984807730f,0.0f,0.0f, -0.984807730f, 0.173648223f ,0.0f,0.0f,0.0f,-3.99999976f ,1.0f });
-	b->addVariable("ligthView", &lightView);
-	b->addVariable("modelView", &modelView);
-	b->addVariable("projection", &proj);
+	b->addVariable("ligthView", lightView);
+	b->addVariable("modelView", modelView);
+	b->addVariable("projection", proj);
 	b->end();
 
 	//PushConstant
 	PushConstant* constant = new PushConstant();
 	vec4f LigthPos = vec4f({ 0.f,4.f,0.7f,0.0 });
-	constant->addVariable("LigthPos", &LigthPos);
+	constant->addVariable("LigthPos", LigthPos);
 
 	uint32_t shadowsize = 512;
 	
@@ -76,7 +76,7 @@ int main() {
 	GraphicPipeline* shadowPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(shadowsize),float(shadowsize),1.0f }), vec2f({ 0,0 }), vec2f({ float(shadowsize),float(shadowsize) }));
 
 	VertexShaderModule* shadowVertex = new VertexShaderModule("Data/Shaders/Shadow/shadow.vert.spv");
-	shadowPipeline->setVextexShader(shadowVertex);
+	shadowPipeline->setVextexModule(shadowVertex);
 
 
 	shadowPipeline->setVertices(scene_vertex_buffer);
@@ -97,7 +97,7 @@ int main() {
 	RenderPass renderPass = RenderPass();
 	GraphicPipeline* renderPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 	VertexShaderModule* renderVertex = new VertexShaderModule("Data/Shaders/Shadow/scene.vert.spv");
-	renderPipeline->setVextexShader(renderVertex);
+	renderPipeline->setVextexModule(renderVertex);
 
 	FragmentShaderModule* renderFrag = new FragmentShaderModule("Data/Shaders/Shadow/scene.frag.spv");
 	renderPipeline->setFragmentModule(renderFrag);
@@ -168,7 +168,7 @@ int main() {
 			modelView = modelView * Helpers::PrepareRotationMatrix(-float(polars[0]), vec3f({ 0 , 1, 0 }));
 			modelView = modelView * Helpers::PrepareRotationMatrix(float(polars[1]), vec3f({ 1 , 0, 0 }));
 			//std::cout << w.m_mouse.position[0] << std::endl;
-			b->setVariable("modelView", &modelView);
+			b->setVariable("modelView", modelView);
 			lastMousePos = new vec2d({ mouse->position[0], mouse->position[1] });
 		}
 		else {
@@ -181,57 +181,20 @@ int main() {
 
 
 		if (updateUniformBuffer) {
-			b->update(commandBuffer[f].getHandle());
+			b->update(commandBuffer[f]);
 			updateUniformBuffer = false;
 		}
 
-		shadowMapPass.draw(commandBuffer[f].getHandle(), shadow_map_buffer->getHandle(), vec2u({ 0,0 }), vec2u({ shadowsize, shadowsize }));
+		shadowMapPass.draw(commandBuffer[f], *shadow_map_buffer, vec2u({ 0,0 }), vec2u({ shadowsize, shadowsize }));
 
-
-		if (d->getPresentQueue()->getIndex() != d->getGraphicQueue(0)->getIndex()) {
-			ImageTransition image_transition_before_drawing = {
-				image.getImage(),													// VkImage              Image
-				VK_ACCESS_MEMORY_READ_BIT,                // VkAccessFlags        CurrentAccess
-				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,     // VkAccessFlags        NewAccess
-				VK_IMAGE_LAYOUT_UNDEFINED,                // VkImageLayout        CurrentLayout
-				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // VkImageLayout        NewLayout
-				d->getPresentQueue()->getIndex(),         // uint32_t             CurrentQueueFamily
-				d->getGraphicQueue(0)->getIndex(),        // uint32_t             NewQueueFamily
-				VK_IMAGE_ASPECT_COLOR_BIT                 // VkImageAspectFlags   Aspect
-			};
-			SetImageMemoryBarrier(commandBuffer[f].getHandle(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, { image_transition_before_drawing });
-		}
-
-
-		
-
-	
 		renderPass.setSwapChainImage(*frameBuffers[f], image);
 
-		renderPass.draw(commandBuffer[f].getHandle(), frameBuffers[f]->getHandle(), vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
-
-
-		if (d->getPresentQueue()->getIndex() != d->getGraphicQueue(0)->getIndex()) {
-			ImageTransition image_transition_before_drawing = {
-				image.getImage(),														// VkImage              Image
-				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,				// VkAccessFlags        CurrentAccess
-				VK_ACCESS_MEMORY_READ_BIT,									// VkAccessFlags        NewAccess
-				VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,						// VkImageLayout        CurrentLayout
-				VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,						// VkImageLayout        NewLayout
-				d->getGraphicQueue(0)->getIndex(),          // uint32_t             CurrentQueueFamily
-				d->getPresentQueue()->getIndex(),						// uint32_t             NewQueueFamily
-				VK_IMAGE_ASPECT_COLOR_BIT										// VkImageAspectFlags   Aspect
-			};
-			SetImageMemoryBarrier(commandBuffer[f].getHandle(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, { image_transition_before_drawing });
-		}
+		renderPass.draw(commandBuffer[f], *frameBuffers[f], vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
 
 		commandBuffer[f].endRecord();
 		
 
-		
-		if (!SubmitCommandBuffersToQueue(queue->getHandle(), wait_semaphore_infos, { commandBuffer[f].getHandle() }, { commandBuffer[f].getSemaphore(1) }, commandBuffer[f].getFence())) {
-			continue;
-		}
+		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(1) });
 
 		
 

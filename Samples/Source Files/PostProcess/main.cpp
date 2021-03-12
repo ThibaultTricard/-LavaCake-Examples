@@ -70,8 +70,8 @@ int main() {
 	mat4 proj = Helpers::PreparePerspectiveProjectionMatrix(static_cast<float>(size.width) / static_cast<float>(size.height),
 		50.0f, 0.5f, 10.0f);
 	mat4 modelView = Helpers::PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
-	uniforms->addVariable("modelView", &modelView);
-	uniforms->addVariable("projection", &proj);
+	uniforms->addVariable("modelView", modelView);
+	uniforms->addVariable("projection",proj);
 	uniforms->end();
 
 	//SkyBox texture
@@ -83,13 +83,13 @@ int main() {
 	//Time PushConstant
 	PushConstant* timeConstant = new PushConstant();
 	float time = 0.0;
-	timeConstant->addVariable("Time", new v<float, 1>({ time }));
+	timeConstant->addVariable("Time",  time );
 
 
 	//camera PushConstant
 	PushConstant* cameraConstant = new PushConstant();
 	vec4f camera = vec4f({ 0.f,0.f,4.f,1.0 });
-	cameraConstant->addVariable("camera", &camera);
+	cameraConstant->addVariable("camera", camera);
 
 	//Color Attachment
 	Attachment* colorAttachemnt = new Attachment(size.width, size.height, s->imageFormat(), attachmentType::COLOR_ATTACHMENT);
@@ -101,7 +101,7 @@ int main() {
 	
 	GraphicPipeline* sphereRenderPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 	VertexShaderModule* sphereVertex = new VertexShaderModule("Data/Shaders/PostProcess/model.vert.spv");
-	sphereRenderPipeline->setVextexShader(sphereVertex);
+	sphereRenderPipeline->setVextexModule(sphereVertex);
 
 	FragmentShaderModule* sphereFrag = new FragmentShaderModule("Data/Shaders/PostProcess/model.frag.spv");
 	sphereRenderPipeline->setFragmentModule(sphereFrag);
@@ -115,7 +115,7 @@ int main() {
 	GraphicPipeline* skyRenderPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
 	VertexShaderModule* skyVertex = new VertexShaderModule("Data/Shaders/PostProcess/skybox.vert.spv");
-	skyRenderPipeline->setVextexShader(skyVertex);
+	skyRenderPipeline->setVextexModule(skyVertex);
 
 	FragmentShaderModule* skyFrag = new FragmentShaderModule("Data/Shaders/PostProcess/skybox.frag.spv");
 	skyRenderPipeline->setFragmentModule(skyFrag);
@@ -135,7 +135,7 @@ int main() {
 
 	GraphicPipeline* postProcessPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 	VertexShaderModule* postProcessVertex = new VertexShaderModule("Data/Shaders/PostProcess/postprocess.vert.spv");
-	postProcessPipeline->setVextexShader(postProcessVertex);
+	postProcessPipeline->setVextexModule(postProcessVertex);
 
 	FragmentShaderModule* postProcessFrag = new FragmentShaderModule("Data/Shaders/PostProcess/postprocess.frag.spv");
 	postProcessPipeline->setFragmentModule(postProcessFrag);
@@ -214,7 +214,7 @@ int main() {
 			});
 
 		time +=0.001f;
-		timeConstant->setVariable("Time", new v<float, 1>({ time }));
+		timeConstant->setVariable("Time",  time);
 
 		if (mouse->leftButton) {
 			if (lastMousePos == nullptr) {
@@ -231,7 +231,7 @@ int main() {
 			modelView = modelView * Helpers::PrepareRotationMatrix(-float(polars[0]), vec3f({ 0 , 1, 0 }));
 			modelView = modelView * Helpers::PrepareRotationMatrix(float(polars[1]), vec3f({ 1 , 0, 0 }));
 			//std::cout << w.m_mouse.position[0] << std::endl;
-			uniforms->setVariable("modelView", &modelView);
+			uniforms->setVariable("modelView", modelView);
 			lastMousePos = new vec2d({ mouse->position[0], mouse->position[1] });
 		}
 		else {
@@ -249,7 +249,7 @@ int main() {
 
 
 		if (updateUniformBuffer) {
-			uniforms->update(commandBuffer[f].getHandle());
+			uniforms->update(commandBuffer[f]);
 			updateUniformBuffer = false;
 		}
 
@@ -260,17 +260,15 @@ int main() {
 
 		
 		renderPass.setSwapChainImage(*frameBuffers[f], image);
-		renderPass.draw(commandBuffer[f].getHandle(), frameBuffers[f]->getHandle(), vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } , { 0.1f, 0.2f, 0.3f, 1.0f } });
+		renderPass.draw(commandBuffer[f], *frameBuffers[f], vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } , { 0.1f, 0.2f, 0.3f, 1.0f } });
 
 
 
 		commandBuffer[f].endRecord();
 
 
-
-		if (!SubmitCommandBuffersToQueue(queue->getHandle(), wait_semaphore_infos, { commandBuffer[f].getHandle() }, { commandBuffer[f].getSemaphore(0) }, commandBuffer[f].getFence())) {
-			continue;
-		}
+		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(0) });
+		
 
 		PresentInfo present_info = {
 			swapchain,                                    // VkSwapchainKHR         Swapchain

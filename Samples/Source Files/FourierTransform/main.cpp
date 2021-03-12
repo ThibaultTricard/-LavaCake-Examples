@@ -20,7 +20,7 @@ int main() {
 	Framework::Queue* queue = d->getGraphicQueue(0);
 	VkQueue& present_queue = d->getPresentQueue()->getHandle();
 
-	VkQueue& compute_queue = d->getComputeQueue(0)->getHandle();
+	Queue* compute_queue = d->getComputeQueue(0);
 
 	VkDevice logical = d->getLogicalDevice();
 	VkExtent2D size = s->size();
@@ -71,7 +71,7 @@ int main() {
 	Framework::ComputePipeline* computePipeline1 = new Framework::ComputePipeline();
 
 	Framework::ComputeShaderModule* computeFourier1 = new Framework::ComputeShaderModule("Data/Shaders/FourierTransform/fourier_pass1.comp.spv");
-	computePipeline1->setComputeShader(computeFourier1);
+	computePipeline1->setComputeModule(computeFourier1);
 
 	computePipeline1->addTextureBuffer(input, VK_SHADER_STAGE_COMPUTE_BIT, 0);
 	computePipeline1->addTexelBuffer(output_pass1, VK_SHADER_STAGE_COMPUTE_BIT, 1);
@@ -83,7 +83,7 @@ int main() {
 	Framework::ComputePipeline* computePipeline2 = new Framework::ComputePipeline();
 
 	Framework::ComputeShaderModule* computeFourier2 = new Framework::ComputeShaderModule("Data/Shaders/FourierTransform/fourier_pass2.comp.spv");
-	computePipeline2->setComputeShader(computeFourier2);
+	computePipeline2->setComputeModule(computeFourier2);
 
 	computePipeline2->addTexelBuffer(output_pass1, VK_SHADER_STAGE_COMPUTE_BIT, 0);
 	computePipeline2->addTexelBuffer(output_pass2, VK_SHADER_STAGE_COMPUTE_BIT, 1);
@@ -98,7 +98,7 @@ int main() {
 	Framework::GraphicPipeline* pipeline = new Framework::GraphicPipeline(vec3f({ 0,0,0 }) , vec3f({ float(size.width),float(size.height),1.0f }) , vec2f({ 0,0 }) , vec2f({ float(size.width),float(size.height) }));
 	Framework::VertexShaderModule* vertexShader = new Framework::VertexShaderModule("Data/Shaders/FourierTransform/shader.vert.spv");
 	Framework::FragmentShaderModule* fragmentShader = new Framework::FragmentShaderModule("Data/Shaders/FourierTransform/shader.frag.spv");
-	pipeline->setVextexShader(vertexShader);
+	pipeline->setVextexModule(vertexShader);
 	pipeline->setFragmentModule(fragmentShader);
 	pipeline->setVertices(quad_vertex_buffer);
 	pipeline->addTexelBuffer(output_pass2, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
@@ -128,19 +128,17 @@ int main() {
 	commandBuffer[0].resetFence();
 	commandBuffer[0].beginRecord();
 
-	sizeBuffer->update(commandBuffer[0].getHandle());
+	sizeBuffer->update(commandBuffer[0]);
 
-	computePipeline1->compute(commandBuffer[0].getHandle(), input->width(), input->height(), 1);
+	computePipeline1->compute(commandBuffer[0], input->width(), input->height(), 1);
 
 	
-	computePipeline2->compute(commandBuffer[0].getHandle(), input->width(), input->height(), 1);
+	computePipeline2->compute(commandBuffer[0], input->width(), input->height(), 1);
 
 
 	commandBuffer[0].endRecord();
 
-
-	if (!SubmitCommandBuffersToQueue(compute_queue, {}, { commandBuffer[0].getHandle() }, { commandBuffer[0].getSemaphore(1) }, { commandBuffer[0].getFence()})) {
-	}
+	commandBuffer[0].submit(compute_queue, {}, { commandBuffer[0].getSemaphore(1) });
 
 
 
@@ -169,14 +167,12 @@ int main() {
 		showPass->setSwapChainImage(*frameBuffers[f], image);
 
 
-		showPass->draw(commandBuffer[f].getHandle(), frameBuffers[f]->getHandle(), vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
+		showPass->draw(commandBuffer[f], *frameBuffers[f], vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
 
 		commandBuffer[f].endRecord();
 
-
-		if (!SubmitCommandBuffersToQueue(queue->getHandle(), wait_semaphore_infos, { commandBuffer[f].getHandle() }, { commandBuffer[f].getSemaphore(0) }, commandBuffer[f].getFence())) {
-			continue;
-		}
+		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(0) });
+		
 
 		PresentInfo present_info = {
 			s->getHandle(),                                    // VkSwapchainKHR         Swapchain

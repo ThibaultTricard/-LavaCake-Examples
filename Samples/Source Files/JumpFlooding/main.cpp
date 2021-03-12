@@ -41,14 +41,14 @@ int main() {
 		data[(x + y * 512) * 4 + 3] = 0.0;
 	}
 
-	seeds->allocate(queue, *cmbBuff, data, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT, VK_FORMAT_R32G32B32A32_SFLOAT);
+	seeds->allocate(queue, *cmbBuff, data, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_FORMAT_R32G32B32A32_SFLOAT);
 
 	jumpFloodPipeline->addTexelBuffer(seeds, VK_SHADER_STAGE_COMPUTE_BIT, 0);
 
 	ComputeShaderModule* compute = new ComputeShaderModule("Data/Shaders/JumpFlooding/JumpFlooding.comp.spv");
-	jumpFloodPipeline->setComputeShader(compute);
+	jumpFloodPipeline->setComputeModule(compute);
 	UniformBuffer* passNumber = new UniformBuffer();
-	passNumber->addVariable("dimention", &LavaCake::vec2i({ 512,512 }));
+	passNumber->addVariable("dimention", LavaCake::vec2i({ 512,512 }));
 	passNumber->addVariable("passNumber", unsigned int(0));
 	passNumber->end();
 	jumpFloodPipeline->addUniformBuffer(passNumber, VK_SHADER_STAGE_COMPUTE_BIT, 1);
@@ -83,7 +83,7 @@ int main() {
 	GraphicPipeline* pipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 	VertexShaderModule* vertexShader = new VertexShaderModule("Data/Shaders/JumpFlooding/shader.vert.spv");
 	FragmentShaderModule* fragmentShader = new FragmentShaderModule("Data/Shaders/JumpFlooding/shader.frag.spv");
-	pipeline->setVextexShader(vertexShader);
+	pipeline->setVextexModule(vertexShader);
 	pipeline->setFragmentModule(fragmentShader);
 	pipeline->setVertices(quad_vertex_buffer);
 	pipeline->addTexelBuffer(seeds, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
@@ -133,18 +133,18 @@ int main() {
 	int pass = 0;
 	while (w.running()) {
 		w.updateInput();
-		
-		cmbBuff->wait(2000000000);
+		if (pass != 0) {
+			cmbBuff->wait(2000000000);
+		}
 		cmbBuff->resetFence();
 		cmbBuff->beginRecord();
 		passNumber->setVariable("passNumber", pass + 1);
-		passNumber->update(cmbBuff->getHandle());
-		jumpFloodPipeline->compute(cmbBuff->getHandle(), 512, 512, 1);
+		passNumber->update(*cmbBuff);
+		jumpFloodPipeline->compute(*cmbBuff, 512, 512, 1);
 		LavaCake::vkCmdPipelineBarrier(cmbBuff->getHandle(), VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, print_memory_barriers.size(), print_memory_barriers.data(), 0, nullptr);
 		cmbBuff->endRecord();
-		if (!SubmitCommandBuffersToQueue(compute_queue, {}, { cmbBuff->getHandle() }, {  }, cmbBuff->getFence())) {
-
-		}
+		cmbBuff->submit(queue, {}, {});
+		
 		pass++;
 		SwapChainImage& image = s->AcquireImage();
 
@@ -163,15 +163,13 @@ int main() {
 		showPass->setSwapChainImage(*frameBuffer, image);
 
 
-		showPass->draw(cmbBuff->getHandle(), frameBuffer->getHandle(), vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
+		showPass->draw(*cmbBuff, *frameBuffer, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
 		LavaCake::vkCmdPipelineBarrier(cmbBuff->getHandle(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, seed_memory_barriers.size(), seed_memory_barriers.data(), 0, nullptr);
 
 		cmbBuff->endRecord();
 
-
-		if (!SubmitCommandBuffersToQueue(queue->getHandle(), wait_semaphore_infos, { cmbBuff->getHandle() }, { cmbBuff->getSemaphore(0) }, cmbBuff->getFence())) {
-			continue;
-		}
+		cmbBuff->submit(queue, wait_semaphore_infos, { cmbBuff->getSemaphore(0) });
+		
 
 		PresentInfo present_info = {
 			s->getHandle(),                                    // VkSwapchainKHR         Swapchain

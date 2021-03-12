@@ -60,8 +60,8 @@ int main() {
 		50.0f, 0.5f, 10.0f);
 
 	mat4 modelView = Helpers::PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
-	b->addVariable("modelView", &modelView);
-	b->addVariable("projection", &proj);
+	b->addVariable("modelView", modelView);
+	b->addVariable("projection", proj);
 	b->end();
 
 
@@ -70,9 +70,9 @@ int main() {
 
 	// Skybox
 	GraphicPipeline* skybox = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
-	VertexShaderModule* skyboxVertex = new VertexShaderModule("Data/Shaders/Refraction/skybox.vert.spv");
-	skybox->setVextexShader(skyboxVertex);
-	FragmentShaderModule* skyboxFrag = new FragmentShaderModule("Data/Shaders/Refraction/skybox.frag.spv");
+	VertexShaderModule* skyboxVertex = new VertexShaderModule("Data/Shaders/ReflectionRefraction/skybox.vert.spv");
+	skybox->setVextexModule(skyboxVertex);
+	FragmentShaderModule* skyboxFrag = new FragmentShaderModule("Data/Shaders/ReflectionRefraction/skybox.frag.spv");
 	skybox->setFragmentModule(skyboxFrag);
 	skybox->setVertices(v);
 	skybox->addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
@@ -81,9 +81,9 @@ int main() {
 
 	// teapot
 	GraphicPipeline* teapotPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
-	VertexShaderModule* vertex = new VertexShaderModule("Data/Shaders/Refraction/model.vert.spv");
-	teapotPipeline->setVextexShader(vertex);
-	FragmentShaderModule* frag = new FragmentShaderModule("Data/Shaders/Refraction/model.frag.spv");
+	VertexShaderModule* vertex = new VertexShaderModule("Data/Shaders/ReflectionRefraction/model.vert.spv");
+	teapotPipeline->setVextexModule(vertex);
+	FragmentShaderModule* frag = new FragmentShaderModule("Data/Shaders/ReflectionRefraction/model.frag.spv");
 	teapotPipeline->setFragmentModule(frag);
 	teapotPipeline->setVertices(teapot_vertex_buffer);
 	teapotPipeline->addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
@@ -92,7 +92,7 @@ int main() {
 
 	PushConstant* constant = new PushConstant();
 	vec3f camera = vec3f({ 0.f,0.f,4.f });
-	constant->addVariable("camera", &camera);
+	constant->addVariable("camera", camera);
 	teapotPipeline->addPushContant(constant, VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	SubpassAttachment SA;
@@ -140,7 +140,7 @@ int main() {
 			modelView = modelView * Helpers::PrepareRotationMatrix(-float(polars[0]), vec3f({ 0 , 1, 0 }));
 			modelView = modelView * Helpers::PrepareRotationMatrix(float(polars[1]), vec3f({ 1 , 0, 0 }));
 			//std::cout << w.m_mouse.position[0] << std::endl;
-			b->setVariable("modelView", &modelView);
+			b->setVariable("modelView", modelView);
 			lastMousePos = new vec2d({ mouse->position[0], mouse->position[1] });
 		}
 		else {
@@ -165,21 +165,19 @@ int main() {
 
 
 		if (updateUniformBuffer) {
-			b->update(commandBuffer[f].getHandle());
+			b->update(commandBuffer[f]);
 			updateUniformBuffer = false;
 		}
 
 		pass.setSwapChainImage(*frameBuffers[f], image);
 
 
-		pass.draw(commandBuffer[f].getHandle(), frameBuffers[f]->getHandle(), vec2u({ 0,0 }), vec2u({ size.width, size.height }) , { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
+		pass.draw(commandBuffer[f], *frameBuffers[f], vec2u({ 0,0 }), vec2u({ size.width, size.height }) , { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
 
 		commandBuffer[f].endRecord();
 
+		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(0) });
 		
-		if (!SubmitCommandBuffersToQueue(queue->getHandle(), wait_semaphore_infos, { commandBuffer[f].getHandle() }, { commandBuffer[f].getSemaphore(1) }, commandBuffer[f].getFence())) {
-			continue;
-		}
 
 		PresentInfo present_info = {
 			s->getHandle(),                                    // VkSwapchainKHR         Swapchain

@@ -46,22 +46,22 @@ int main() {
 	mat4 proj = Helpers::PreparePerspectiveProjectionMatrix(static_cast<float>(size.width) / static_cast<float>(size.height),
 		50.0f, 0.5f, 10.0f);
 	mat4 modelView = Helpers::PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
-	b->addVariable("modelView", &modelView);
-	b->addVariable("projection", &proj);
+	b->addVariable("modelView", modelView);
+	b->addVariable("projection", proj);
 	b->end();
 
 
 	//PushConstant
 	PushConstant* constant = new PushConstant();
 	vec4f LigthPos = vec4f({ 0.f,4.f,0.7f,0.0 });
-	constant->addVariable("LigthPos", &LigthPos);
+	constant->addVariable("LigthPos", LigthPos);
 
 	// Render pass
 	RenderPass pass = RenderPass();
 	GraphicPipeline* pipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
 	VertexShaderModule* vertex = new VertexShaderModule("Data/Shaders/NormalMap/shader.vert.spv");
-	pipeline->setVextexShader(vertex);
+	pipeline->setVextexModule(vertex);
 
 
 	FragmentShaderModule* frag = new FragmentShaderModule("Data/Shaders/NormalMap/shader.frag.spv");
@@ -130,7 +130,7 @@ int main() {
 			modelView = modelView * Helpers::PrepareRotationMatrix(-float(polars[0]), vec3f({ 0 , 1, 0 }));
 			modelView = modelView * Helpers::PrepareRotationMatrix(float(polars[1]), vec3f({ 1 , 0, 0 }));
 			//std::cout << w.m_mouse.position[0] << std::endl;
-			b->setVariable("modelView", &modelView);
+			b->setVariable("modelView", modelView);
 			lastMousePos = new vec2d({ mouse->position[0], mouse->position[1] });
 		}
 		else {
@@ -145,7 +145,7 @@ int main() {
 
 
 		if (updateUniformBuffer) {
-			b->update(commandBuffer[f].getHandle());
+			b->update(commandBuffer[f]);
 			updateUniformBuffer = false;
 		}
 
@@ -153,15 +153,13 @@ int main() {
 		pass.setSwapChainImage(*frameBuffers[f], image);
 
 
-		pass.draw(commandBuffer[f].getHandle(), frameBuffers[f]->getHandle(), vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
+		pass.draw(commandBuffer[f], *frameBuffers[f], vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
 
 
 		commandBuffer[f].endRecord();
 
-		
-		if (!SubmitCommandBuffersToQueue(queue->getHandle(), wait_semaphore_infos, { commandBuffer[f].getHandle() }, { commandBuffer[f].getSemaphore(0) }, commandBuffer[f].getFence())) {
-			continue;
-		}
+		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(0) });
+	
 
 		PresentInfo present_info = {
 			swapchain,                                    // VkSwapchainKHR         Swapchain
