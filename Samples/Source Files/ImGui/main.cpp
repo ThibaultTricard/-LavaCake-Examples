@@ -1,5 +1,4 @@
 #include "Framework/Framework.h"
-#include <windows.h>
 
 using namespace LavaCake;
 using namespace LavaCake::Geometry;
