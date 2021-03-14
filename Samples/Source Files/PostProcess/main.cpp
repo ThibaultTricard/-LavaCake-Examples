@@ -6,7 +6,7 @@
 
 #ifdef __APPLE__
 std::string prefix ="../";
-#elif
+#else
 std::string prefix ="";
 #endif
 
