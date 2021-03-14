@@ -18,11 +18,8 @@ macro( list_samples )
 		file( GLOB SAMPLES RELATIVE "${CMAKE_CURRENT_LIST_DIR}/Samples/Source Files" "${CMAKE_CURRENT_LIST_DIR}/Samples/Source Files/*" )	
 		FOREACH( SAMPLE ${SAMPLES} )
 			IF(NOT ${SAMPLE} MATCHES ".DS_Store")
-				if ( APPLE )
-					file( GLOB SAMPLE_SOURCE_FILES "Samples/Source Files/${SAMPLE}/*.mm" )
-				else ()
-					file( GLOB SAMPLE_SOURCE_FILES "Samples/Source Files/${SAMPLE}/*.cpp" )
-				endif()
+
+				file( GLOB SAMPLE_SOURCE_FILES "Samples/Source Files/${SAMPLE}/*.cpp" )
 				source_group( "" FILES ${SAMPLE_SOURCE_FILES} )
 
 				clearShader()

@@ -1,13 +1,16 @@
 #include "Framework/Framework.h"
-#define GLFW_INCLUDE_NONE
-#define GLFW_EXPOSE_NATIVE_WIN32 true
-#include "glfw3.h"
-#include "glfw3native.h"
+
 
 using namespace LavaCake;
 using namespace LavaCake::Geometry;
 using namespace LavaCake::Framework;
 using namespace LavaCake::Core;
+
+#ifdef __APPLE__
+std::string prefix ="../";
+#elif
+std::string prefix ="";
+#endif
 
 int main() {
 
@@ -50,8 +53,8 @@ int main() {
 
 	
 	
-	VertexShaderModule* vertexShader = new VertexShaderModule("Data/Shaders/helloworld/shader.vert.spv");
-	FragmentShaderModule* fragmentShader = new FragmentShaderModule("Data/Shaders/helloworld/shader.frag.spv");
+	VertexShaderModule* vertexShader = new VertexShaderModule(prefix+"Data/Shaders/helloworld/shader.vert.spv");
+	FragmentShaderModule* fragmentShader = new FragmentShaderModule(prefix+"Data/Shaders/helloworld/shader.frag.spv");
 
 	GraphicPipeline* pipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 	pipeline->setVextexModule(vertexShader);

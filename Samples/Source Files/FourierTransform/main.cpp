@@ -6,6 +6,12 @@ using namespace LavaCake::Geometry;
 using namespace LavaCake::Framework;
 using namespace LavaCake::Core;
 
+#ifdef __APPLE__
+std::string prefix ="../";
+#elif
+std::string prefix ="";
+#endif
+
 int main() {
 
 	int nbFrames = 3;
@@ -51,7 +57,7 @@ int main() {
 	quad_vertex_buffer->allocate(queue, commandBuffer[0]);
 
 	//texture map
-	Framework::TextureBuffer* input = new Framework::TextureBuffer("Data/Textures/mandrill.png", 4);
+	Framework::TextureBuffer* input = new Framework::TextureBuffer(prefix+"Data/Textures/mandrill.png", 4);
 	input->allocate(queue, commandBuffer[0]);
 
 
@@ -70,7 +76,7 @@ int main() {
 	//pass1 
 	Framework::ComputePipeline* computePipeline1 = new Framework::ComputePipeline();
 
-	Framework::ComputeShaderModule* computeFourier1 = new Framework::ComputeShaderModule("Data/Shaders/FourierTransform/fourier_pass1.comp.spv");
+	Framework::ComputeShaderModule* computeFourier1 = new Framework::ComputeShaderModule(prefix+"Data/Shaders/FourierTransform/fourier_pass1.comp.spv");
 	computePipeline1->setComputeModule(computeFourier1);
 
 	computePipeline1->addTextureBuffer(input, VK_SHADER_STAGE_COMPUTE_BIT, 0);
@@ -82,7 +88,7 @@ int main() {
 	//pass2
 	Framework::ComputePipeline* computePipeline2 = new Framework::ComputePipeline();
 
-	Framework::ComputeShaderModule* computeFourier2 = new Framework::ComputeShaderModule("Data/Shaders/FourierTransform/fourier_pass2.comp.spv");
+	Framework::ComputeShaderModule* computeFourier2 = new Framework::ComputeShaderModule(prefix+"Data/Shaders/FourierTransform/fourier_pass2.comp.spv");
 	computePipeline2->setComputeModule(computeFourier2);
 
 	computePipeline2->addTexelBuffer(output_pass1, VK_SHADER_STAGE_COMPUTE_BIT, 0);
@@ -96,8 +102,8 @@ int main() {
 	Framework::RenderPass* showPass = new Framework::RenderPass();
 
 	Framework::GraphicPipeline* pipeline = new Framework::GraphicPipeline(vec3f({ 0,0,0 }) , vec3f({ float(size.width),float(size.height),1.0f }) , vec2f({ 0,0 }) , vec2f({ float(size.width),float(size.height) }));
-	Framework::VertexShaderModule* vertexShader = new Framework::VertexShaderModule("Data/Shaders/FourierTransform/shader.vert.spv");
-	Framework::FragmentShaderModule* fragmentShader = new Framework::FragmentShaderModule("Data/Shaders/FourierTransform/shader.frag.spv");
+	Framework::VertexShaderModule* vertexShader = new Framework::VertexShaderModule(prefix+"Data/Shaders/FourierTransform/shader.vert.spv");
+	Framework::FragmentShaderModule* fragmentShader = new Framework::FragmentShaderModule(prefix+"Data/Shaders/FourierTransform/shader.frag.spv");
 	pipeline->setVextexModule(vertexShader);
 	pipeline->setFragmentModule(fragmentShader);
 	pipeline->setVertices(quad_vertex_buffer);

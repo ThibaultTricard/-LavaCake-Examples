@@ -9,6 +9,12 @@ using namespace LavaCake::Geometry;
 using namespace LavaCake::Framework;
 using namespace LavaCake::Core;
 
+#ifdef __APPLE__
+std::string prefix ="../";
+#elif
+std::string prefix ="";
+#endif
+
 int main() {
 	uint32_t nbFrames = 4;
 	ErrorCheck::PrintError(true);
@@ -33,12 +39,12 @@ int main() {
 	vec3f camera = vec3f({0.0f,0.0f,4.0f});
 
 	//knot mesh
-	std::pair<std::vector<float>, Geometry::vertexFormat > knot = Geometry::Load3DModelFromObjFile("Data/Models/knot.obj", true, false, false, true);
+	std::pair<std::vector<float>, Geometry::vertexFormat > knot = Geometry::Load3DModelFromObjFile(prefix+"Data/Models/knot.obj", true, false, false, true);
 	Geometry::Mesh_t* knot_mesh = new Geometry::Mesh<Geometry::TRIANGLE>(knot.first, knot.second);
 
 
 	//plane mesh
-	std::pair<std::vector<float>, Geometry::vertexFormat > plane = Geometry::Load3DModelFromObjFile("Data/Models/plane.obj", true, false, false, false);
+	std::pair<std::vector<float>, Geometry::vertexFormat > plane = Geometry::Load3DModelFromObjFile(prefix+"Data/Models/plane.obj", true, false, false, false);
 	Geometry::Mesh_t* plane_mesh = new Geometry::Mesh<Geometry::TRIANGLE>(plane.first, plane.second);
 
 
@@ -75,7 +81,7 @@ int main() {
 	RenderPass shadowMapPass = RenderPass();
 	GraphicPipeline* shadowPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(shadowsize),float(shadowsize),1.0f }), vec2f({ 0,0 }), vec2f({ float(shadowsize),float(shadowsize) }));
 
-	VertexShaderModule* shadowVertex = new VertexShaderModule("Data/Shaders/Shadow/shadow.vert.spv");
+	VertexShaderModule* shadowVertex = new VertexShaderModule(prefix+"Data/Shaders/Shadow/shadow.vert.spv");
 	shadowPipeline->setVextexModule(shadowVertex);
 
 
@@ -96,10 +102,10 @@ int main() {
 	//Render Pass
 	RenderPass renderPass = RenderPass();
 	GraphicPipeline* renderPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
-	VertexShaderModule* renderVertex = new VertexShaderModule("Data/Shaders/Shadow/scene.vert.spv");
+	VertexShaderModule* renderVertex = new VertexShaderModule(prefix+"Data/Shaders/Shadow/scene.vert.spv");
 	renderPipeline->setVextexModule(renderVertex);
 
-	FragmentShaderModule* renderFrag = new FragmentShaderModule("Data/Shaders/Shadow/scene.frag.spv");
+	FragmentShaderModule* renderFrag = new FragmentShaderModule(prefix+"Data/Shaders/Shadow/scene.frag.spv");
 	renderPipeline->setFragmentModule(renderFrag);
 
 	

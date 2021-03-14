@@ -9,6 +9,13 @@ using namespace LavaCake::Geometry;
 using namespace LavaCake::Framework;
 using namespace LavaCake::Core;
 
+
+#ifdef __APPLE__
+std::string prefix ="../";
+#elif
+std::string prefix ="";
+#endif
+
 int main() {
 	int nbFrames = 3;
 	ErrorCheck::PrintError(true);
@@ -28,12 +35,12 @@ int main() {
 	}
 
 	//Normal map
-	TextureBuffer* normalMap = new TextureBuffer("Data/Textures/normal_map.png", 4);
+	TextureBuffer* normalMap = new TextureBuffer(prefix+"Data/Textures/normal_map.png", 4);
 	normalMap->allocate(queue, commandBuffer[0]);
 
 	//vertex buffer
 	//knot mesh
-	std::pair<std::vector<float>, vertexFormat > ice = Load3DModelFromObjFile("Data/Models/ice.obj", true,true, true, true);
+	std::pair<std::vector<float>, vertexFormat > ice = Load3DModelFromObjFile(prefix+"Data/Models/ice.obj", true,true, true, true);
 	Geometry::Mesh_t* ice_mesh = new Geometry::Mesh<Geometry::TRIANGLE>(ice.first, ice.second);
 
 
@@ -60,11 +67,11 @@ int main() {
 	RenderPass pass = RenderPass();
 	GraphicPipeline* pipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
-	VertexShaderModule* vertex = new VertexShaderModule("Data/Shaders/NormalMap/shader.vert.spv");
+	VertexShaderModule* vertex = new VertexShaderModule(prefix+"Data/Shaders/NormalMap/shader.vert.spv");
 	pipeline->setVextexModule(vertex);
 
 
-	FragmentShaderModule* frag = new FragmentShaderModule("Data/Shaders/NormalMap/shader.frag.spv");
+	FragmentShaderModule* frag = new FragmentShaderModule(prefix+"Data/Shaders/NormalMap/shader.frag.spv");
 	pipeline->setFragmentModule(frag);
 
 	pipeline->setVertices(v);

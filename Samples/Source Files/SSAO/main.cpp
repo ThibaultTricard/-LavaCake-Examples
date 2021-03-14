@@ -9,6 +9,11 @@ using namespace LavaCake::Geometry;
 using namespace LavaCake::Framework;
 using namespace LavaCake::Core;
 
+#ifdef __APPLE__
+std::string prefix ="../";
+#elif
+std::string prefix ="";
+#endif
 
 float lerp(float a, float b, float f)
 {
@@ -32,7 +37,7 @@ int main() {
 
 	ImGuiWrapper* gui = new ImGuiWrapper();
 	gui->initGui(&w, d->getGraphicQueue(0), &cmdBuf);
-	auto knight = Load3DModelFromObjFile("Data/Models/StrollingKnight.obj", true, true);
+	auto knight = Load3DModelFromObjFile(prefix+"Data/Models/StrollingKnight.obj", true, true);
 	Mesh_t* knightMesh = new IndexedMesh<TRIANGLE>(knight.first.first, knight.first.second, knight.second);
 
 	VertexBuffer* vertexBuffer = new VertexBuffer({ knightMesh });
@@ -54,13 +59,13 @@ int main() {
 	b->end();
 
 
-	RenderPass Gpass(VK_FORMAT_R32G32B32A32_SFLOAT, VK_FORMAT_D24_UNORM_S8_UINT);
+	RenderPass Gpass(VK_FORMAT_R32G32B32A32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
 	GraphicPipeline* Gpipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
-	VertexShaderModule* Gvertex = new  VertexShaderModule("Data/Shaders/SSAO/Gbuffer.vert.spv");
+	VertexShaderModule* Gvertex = new  VertexShaderModule(prefix+"Data/Shaders/SSAO/Gbuffer.vert.spv");
 	Gpipeline->setVextexModule(Gvertex);
 
-	FragmentShaderModule* Gfragment = new  FragmentShaderModule("Data/Shaders/SSAO/Gbuffer.frag.spv");
+	FragmentShaderModule* Gfragment = new  FragmentShaderModule(prefix+"Data/Shaders/SSAO/Gbuffer.frag.spv");
 	Gpipeline->setFragmentModule(Gfragment);
 
 
@@ -156,12 +161,12 @@ int main() {
 	SSAOuni->end();
 
 
-	RenderPass* SSAORenderPass = new RenderPass(VK_FORMAT_R32G32B32A32_SFLOAT, VK_FORMAT_D24_UNORM_S8_UINT);
+	RenderPass* SSAORenderPass = new RenderPass(VK_FORMAT_R32G32B32A32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
 
 	GraphicPipeline* SSAOpipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
-	VertexShaderModule* SSAOvertex = new VertexShaderModule("Data/Shaders/SSAO/SSAO.vert.spv");
-	FragmentShaderModule* SSAOfragment = new FragmentShaderModule("Data/Shaders/SSAO/SSAO.frag.spv");
+	VertexShaderModule* SSAOvertex = new VertexShaderModule(prefix+"Data/Shaders/SSAO/SSAO.vert.spv");
+	FragmentShaderModule* SSAOfragment = new FragmentShaderModule(prefix+"Data/Shaders/SSAO/SSAO.frag.spv");
 
 	SSAOpipeline->setVertices(quadBuffer);
 
@@ -196,14 +201,14 @@ int main() {
 	//																					Blur																											//
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	RenderPass* Blurpass = new RenderPass(VK_FORMAT_R32G32B32A32_SFLOAT, VK_FORMAT_D24_UNORM_S8_UINT);
+	RenderPass* Blurpass = new RenderPass(VK_FORMAT_R32G32B32A32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
 
 	GraphicPipeline blurPipeline (vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
 	blurPipeline.setVertices(quadBuffer);
 
-	VertexShaderModule* blurVert = new VertexShaderModule("Data/Shaders/SSAO/blur.vert.spv");
-	FragmentShaderModule* blurFrag = new FragmentShaderModule("Data/Shaders/SSAO/blur.frag.spv");
+	VertexShaderModule* blurVert = new VertexShaderModule(prefix+"Data/Shaders/SSAO/blur.vert.spv");
+	FragmentShaderModule* blurFrag = new FragmentShaderModule(prefix+"Data/Shaders/SSAO/blur.frag.spv");
 
 	blurPipeline.setVextexModule(blurVert);
 	blurPipeline.setFragmentModule(blurFrag);
@@ -241,8 +246,8 @@ int main() {
 
 	lightingPipeline.setVertices(quadBuffer);
 
-	VertexShaderModule* lightingVert = new VertexShaderModule("Data/Shaders/SSAO/lighting.vert.spv");
-	FragmentShaderModule* lightingFrag = new FragmentShaderModule("Data/Shaders/SSAO/lighting.frag.spv");
+	VertexShaderModule* lightingVert = new VertexShaderModule(prefix+"Data/Shaders/SSAO/lighting.vert.spv");
+	FragmentShaderModule* lightingFrag = new FragmentShaderModule(prefix+"Data/Shaders/SSAO/lighting.frag.spv");
 
 	lightingPipeline.setVextexModule(lightingVert);
 	lightingPipeline.setFragmentModule(lightingFrag);
@@ -323,7 +328,7 @@ int main() {
 			lastMousePos = nullptr;
 		}
 
-		cmdBuf.wait(MAXUINT32);
+		cmdBuf.wait(UINT32_MAX);
 		cmdBuf.resetFence();
 
 		ImGui::NewFrame();

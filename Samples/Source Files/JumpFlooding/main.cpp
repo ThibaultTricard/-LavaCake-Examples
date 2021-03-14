@@ -5,6 +5,12 @@ using namespace LavaCake::Geometry;
 using namespace LavaCake::Framework;
 using namespace LavaCake::Core;
 
+#ifdef __APPLE__
+std::string prefix ="../";
+#elif
+std::string prefix ="";
+#endif
+
 int main() {
 
 	Window w("Lavacake: JumpFlooding", 512, 512);
@@ -45,11 +51,11 @@ int main() {
 
 	jumpFloodPipeline->addTexelBuffer(seeds, VK_SHADER_STAGE_COMPUTE_BIT, 0);
 
-	ComputeShaderModule* compute = new ComputeShaderModule("Data/Shaders/JumpFlooding/JumpFlooding.comp.spv");
+	ComputeShaderModule* compute = new ComputeShaderModule(prefix+"Data/Shaders/JumpFlooding/JumpFlooding.comp.spv");
 	jumpFloodPipeline->setComputeModule(compute);
 	UniformBuffer* passNumber = new UniformBuffer();
 	passNumber->addVariable("dimention", LavaCake::vec2i({ 512,512 }));
-	passNumber->addVariable("passNumber", unsigned int(0));
+	passNumber->addVariable("passNumber", (unsigned int)(0));
 	passNumber->end();
 	jumpFloodPipeline->addUniformBuffer(passNumber, VK_SHADER_STAGE_COMPUTE_BIT, 1);
 	jumpFloodPipeline->compile();
@@ -81,8 +87,8 @@ int main() {
 	RenderPass* showPass = new RenderPass();
 
 	GraphicPipeline* pipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
-	VertexShaderModule* vertexShader = new VertexShaderModule("Data/Shaders/JumpFlooding/shader.vert.spv");
-	FragmentShaderModule* fragmentShader = new FragmentShaderModule("Data/Shaders/JumpFlooding/shader.frag.spv");
+	VertexShaderModule* vertexShader = new VertexShaderModule(prefix+"Data/Shaders/JumpFlooding/shader.vert.spv");
+	FragmentShaderModule* fragmentShader = new FragmentShaderModule(prefix+"Data/Shaders/JumpFlooding/shader.frag.spv");
 	pipeline->setVextexModule(vertexShader);
 	pipeline->setFragmentModule(fragmentShader);
 	pipeline->setVertices(quad_vertex_buffer);
@@ -178,8 +184,9 @@ int main() {
 		if (!PresentImage(present_queue, { cmbBuff->getSemaphore(0) }, { present_info })) {
 			continue;
 		}
-
+#ifdef _WIN32
 		Sleep(500);
+#endif
 	}
 	d->end();
 	delete cmbBuff;

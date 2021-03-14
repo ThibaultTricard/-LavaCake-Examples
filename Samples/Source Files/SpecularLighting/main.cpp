@@ -11,6 +11,13 @@ using namespace LavaCake::Geometry;
 using namespace LavaCake::Framework;
 using namespace LavaCake::Core;
 
+#ifdef __APPLE__
+std::string prefix ="../";
+#elif
+std::string prefix ="";
+#endif
+
+
 int main() {
 	int nbFrames = 3;
 	ErrorCheck::PrintError(true);
@@ -31,7 +38,7 @@ int main() {
 
 	//vertex buffer
 	//knot mesh
-	auto knot = Load3DModelFromObjFile("Data/Models/knot.obj", true, true);
+	auto knot = Load3DModelFromObjFile(prefix+"Data/Models/knot.obj", true, true);
 	Mesh_t* knot_mesh = new IndexedMesh<TRIANGLE>(knot.first.first, knot.first.second,knot.second);
 
 	VertexBuffer* v = new VertexBuffer({ knot_mesh });
@@ -56,10 +63,10 @@ int main() {
 	RenderPass pass = RenderPass();
 	GraphicPipeline* pipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
-	VertexShaderModule* vertex = new VertexShaderModule("Data/Shaders/SpecularLighting/shader.vert.spv");
+	VertexShaderModule* vertex = new VertexShaderModule(prefix+"Data/Shaders/SpecularLighting/shader.vert.spv");
 	pipeline->setVextexModule(vertex);
 
-	FragmentShaderModule* frag = new FragmentShaderModule("Data/Shaders/SpecularLighting/shader.frag.spv");
+	FragmentShaderModule* frag = new FragmentShaderModule(prefix+"Data/Shaders/SpecularLighting/shader.frag.spv");
 	pipeline->setFragmentModule(frag);
 	pipeline->addPushContant(constant, VK_SHADER_STAGE_FRAGMENT_BIT);
 	pipeline->setVertices(v);

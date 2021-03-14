@@ -4,6 +4,12 @@
 #include "VulkanDestroyer.h"
 #include "Geometry/meshLoader.h"
 
+#ifdef __APPLE__
+std::string prefix ="../";
+#elif
+std::string prefix ="";
+#endif
+
 using namespace LavaCake;
 using namespace LavaCake::Geometry;
 using namespace LavaCake::Framework;
@@ -26,7 +32,7 @@ int main() {
 		commandBuffer[i].addSemaphore();
 	}
 
-	std::pair<std::vector<float>, vertexFormat > sphere = Load3DModelFromObjFile("Data/Models/sphere.obj", true, false, false, true);
+	std::pair<std::vector<float>, vertexFormat > sphere = Load3DModelFromObjFile(prefix+"Data/Models/sphere.obj", true, false, false, true);
 	Geometry::Mesh_t* sphere_mesh = new Geometry::Mesh<Geometry::TRIANGLE>(sphere.first, sphere.second);
 
 	
@@ -36,7 +42,7 @@ int main() {
 
 	//Skybox Data
 
-	std::pair<std::vector<float>, vertexFormat > sky = Load3DModelFromObjFile("Data/Models/cube.obj", true, false, false, true);
+	std::pair<std::vector<float>, vertexFormat > sky = Load3DModelFromObjFile(prefix+"Data/Models/cube.obj", true, false, false, true);
 	Geometry::Mesh_t* sky_mesh = new Geometry::Mesh<Geometry::TRIANGLE>(sky.first, sky.second);
 	
 
@@ -75,7 +81,7 @@ int main() {
 	uniforms->end();
 
 	//SkyBox texture
-	CubeMap* skyCubeMap = new CubeMap("Data/Textures/Skansen/", 4);
+	CubeMap* skyCubeMap = new CubeMap(prefix+"Data/Textures/Skansen/", 4);
 	skyCubeMap->allocate(queue, commandBuffer[0]);
 
 
@@ -100,10 +106,10 @@ int main() {
 
 	
 	GraphicPipeline* sphereRenderPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
-	VertexShaderModule* sphereVertex = new VertexShaderModule("Data/Shaders/PostProcess/model.vert.spv");
+	VertexShaderModule* sphereVertex = new VertexShaderModule(prefix+"Data/Shaders/PostProcess/model.vert.spv");
 	sphereRenderPipeline->setVextexModule(sphereVertex);
 
-	FragmentShaderModule* sphereFrag = new FragmentShaderModule("Data/Shaders/PostProcess/model.frag.spv");
+	FragmentShaderModule* sphereFrag = new FragmentShaderModule(prefix+"Data/Shaders/PostProcess/model.frag.spv");
 	sphereRenderPipeline->setFragmentModule(sphereFrag);
 
 	sphereRenderPipeline->setVertices(sphere_vertex_buffer);
@@ -114,10 +120,10 @@ int main() {
 
 	GraphicPipeline* skyRenderPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
-	VertexShaderModule* skyVertex = new VertexShaderModule("Data/Shaders/PostProcess/skybox.vert.spv");
+	VertexShaderModule* skyVertex = new VertexShaderModule(prefix+"Data/Shaders/PostProcess/skybox.vert.spv");
 	skyRenderPipeline->setVextexModule(skyVertex);
 
-	FragmentShaderModule* skyFrag = new FragmentShaderModule("Data/Shaders/PostProcess/skybox.frag.spv");
+	FragmentShaderModule* skyFrag = new FragmentShaderModule(prefix+"Data/Shaders/PostProcess/skybox.frag.spv");
 	skyRenderPipeline->setFragmentModule(skyFrag);
 
 
@@ -134,10 +140,10 @@ int main() {
 	renderPass.addSubPass({ sphereRenderPipeline,skyRenderPipeline }, SA);
 
 	GraphicPipeline* postProcessPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
-	VertexShaderModule* postProcessVertex = new VertexShaderModule("Data/Shaders/PostProcess/postprocess.vert.spv");
+	VertexShaderModule* postProcessVertex = new VertexShaderModule(prefix+"Data/Shaders/PostProcess/postprocess.vert.spv");
 	postProcessPipeline->setVextexModule(postProcessVertex);
 
-	FragmentShaderModule* postProcessFrag = new FragmentShaderModule("Data/Shaders/PostProcess/postprocess.frag.spv");
+	FragmentShaderModule* postProcessFrag = new FragmentShaderModule(prefix+"Data/Shaders/PostProcess/postprocess.frag.spv");
 	postProcessPipeline->setFragmentModule(postProcessFrag);
 
 	postProcessPipeline->addPushContant(timeConstant, VK_SHADER_STAGE_FRAGMENT_BIT);

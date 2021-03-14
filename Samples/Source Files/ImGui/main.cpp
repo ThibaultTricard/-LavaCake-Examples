@@ -5,9 +5,15 @@ using namespace LavaCake::Geometry;
 using namespace LavaCake::Framework;
 using namespace LavaCake::Core;
 
+#ifdef __APPLE__
+std::string prefix ="../";
+#elif
+std::string prefix ="";
+#endif
+
 int main() {
 
-	Window w("LavaCake HelloWorld & Imgui", 1400, 1000);
+	Window w("LavaCake HelloWorld & Imgui", 1200, 800);
 
 	ImGuiWrapper* gui = new ImGuiWrapper();
 
@@ -39,8 +45,10 @@ int main() {
 
 	RenderPass* pass = new RenderPass();
 	GraphicPipeline* pipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
-	VertexShaderModule* vertexShader = new VertexShaderModule("Data/Shaders/helloworld/shader.vert.spv");
-	FragmentShaderModule* fragmentShader = new FragmentShaderModule("Data/Shaders/helloworld/shader.frag.spv");
+
+    VertexShaderModule* vertexShader = new VertexShaderModule(prefix+"Data/Shaders/helloworld/shader.vert.spv");
+	FragmentShaderModule* fragmentShader = new FragmentShaderModule(prefix+"Data/Shaders/helloworld/shader.frag.spv");
+
 
 	pipeline->setVextexModule(vertexShader);
 	pipeline->setFragmentModule(fragmentShader);

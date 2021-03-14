@@ -10,6 +10,12 @@ using namespace LavaCake::Framework;
 using namespace LavaCake::Geometry;
 using namespace LavaCake::Core;
 
+#ifdef __APPLE__
+std::string prefix ="../";
+#elif
+std::string prefix ="";
+#endif
+
 int main() {
 	int nbFrames = 3;
 	ErrorCheck::PrintError(true);
@@ -32,12 +38,12 @@ int main() {
 	}
 
 	//cubeMap
-	TextureBuffer* cubeMap = new CubeMap("Data/Textures/Skansen/", 4);
+	TextureBuffer* cubeMap = new CubeMap(prefix+"Data/Textures/Skansen/", 4);
 	cubeMap->allocate(queue, commandBuffer[0]);
 
 	//Skybox Data
 
-	std::pair<std::vector<float>, vertexFormat > sky = Load3DModelFromObjFile("Data/Models/cube.obj", true, false, false, true);
+	std::pair<std::vector<float>, vertexFormat > sky = Load3DModelFromObjFile(prefix+"Data/Models/cube.obj", true, false, false, true);
 	Mesh_t* sky_mesh = new Mesh<TRIANGLE>(sky.first, sky.second);
 
 	VertexBuffer* v = new VertexBuffer({ sky_mesh });
@@ -46,7 +52,7 @@ int main() {
 
 	//teapotVertices
 
-	std::pair<std::vector<float>, vertexFormat > teapot = Load3DModelFromObjFile("Data/Models/teapot.obj", true, false, false, true);
+	std::pair<std::vector<float>, vertexFormat > teapot = Load3DModelFromObjFile(prefix+"Data/Models/teapot.obj", true, false, false, true);
 	Mesh_t* teapot_mesh = new Mesh<TRIANGLE>(teapot.first, teapot.second);
 
 	exportToPly(teapot_mesh, "teapot.ply");
@@ -70,9 +76,9 @@ int main() {
 
 	// Skybox
 	GraphicPipeline* skybox = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
-	VertexShaderModule* skyboxVertex = new VertexShaderModule("Data/Shaders/ReflectionRefraction/skybox.vert.spv");
+	VertexShaderModule* skyboxVertex = new VertexShaderModule(prefix+"Data/Shaders/ReflectionRefraction/skybox.vert.spv");
 	skybox->setVextexModule(skyboxVertex);
-	FragmentShaderModule* skyboxFrag = new FragmentShaderModule("Data/Shaders/ReflectionRefraction/skybox.frag.spv");
+	FragmentShaderModule* skyboxFrag = new FragmentShaderModule(prefix+"Data/Shaders/ReflectionRefraction/skybox.frag.spv");
 	skybox->setFragmentModule(skyboxFrag);
 	skybox->setVertices(v);
 	skybox->addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
@@ -81,9 +87,9 @@ int main() {
 
 	// teapot
 	GraphicPipeline* teapotPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
-	VertexShaderModule* vertex = new VertexShaderModule("Data/Shaders/ReflectionRefraction/model.vert.spv");
+	VertexShaderModule* vertex = new VertexShaderModule(prefix+"Data/Shaders/ReflectionRefraction/model.vert.spv");
 	teapotPipeline->setVextexModule(vertex);
-	FragmentShaderModule* frag = new FragmentShaderModule("Data/Shaders/ReflectionRefraction/model.frag.spv");
+	FragmentShaderModule* frag = new FragmentShaderModule(prefix+"Data/Shaders/ReflectionRefraction/model.frag.spv");
 	teapotPipeline->setFragmentModule(frag);
 	teapotPipeline->setVertices(teapot_vertex_buffer);
 	teapotPipeline->addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
