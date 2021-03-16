@@ -50,7 +50,7 @@ int main() {
 	FragmentShaderModule* fragmentShader = new FragmentShaderModule(prefix+"Data/Shaders/helloworld/shader.frag.spv");
 
 
-	pipeline->setVextexModule(vertexShader);
+	pipeline->setVertexModule(vertexShader);
 	pipeline->setFragmentModule(fragmentShader);
 	pipeline->setVertices(triangle_vertex_buffer);
 

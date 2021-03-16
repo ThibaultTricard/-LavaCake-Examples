@@ -68,7 +68,7 @@ int main() {
 	GraphicPipeline* pipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
 	VertexShaderModule* vertex = new VertexShaderModule(prefix+"Data/Shaders/NormalMap/shader.vert.spv");
-	pipeline->setVextexModule(vertex);
+	pipeline->setVertexModule(vertex);
 
 
 	FragmentShaderModule* frag = new FragmentShaderModule(prefix+"Data/Shaders/NormalMap/shader.frag.spv");

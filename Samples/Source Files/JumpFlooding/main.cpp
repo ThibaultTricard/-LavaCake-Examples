@@ -89,7 +89,7 @@ int main() {
 	GraphicPipeline* pipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 	VertexShaderModule* vertexShader = new VertexShaderModule(prefix+"Data/Shaders/JumpFlooding/shader.vert.spv");
 	FragmentShaderModule* fragmentShader = new FragmentShaderModule(prefix+"Data/Shaders/JumpFlooding/shader.frag.spv");
-	pipeline->setVextexModule(vertexShader);
+	pipeline->setVertexModule(vertexShader);
 	pipeline->setFragmentModule(fragmentShader);
 	pipeline->setVertices(quad_vertex_buffer);
 	pipeline->addTexelBuffer(seeds, VK_SHADER_STAGE_FRAGMENT_BIT, 0);

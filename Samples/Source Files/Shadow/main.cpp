@@ -82,7 +82,7 @@ int main() {
 	GraphicPipeline* shadowPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(shadowsize),float(shadowsize),1.0f }), vec2f({ 0,0 }), vec2f({ float(shadowsize),float(shadowsize) }));
 
 	VertexShaderModule* shadowVertex = new VertexShaderModule(prefix+"Data/Shaders/Shadow/shadow.vert.spv");
-	shadowPipeline->setVextexModule(shadowVertex);
+	shadowPipeline->setVertexModule(shadowVertex);
 
 
 	shadowPipeline->setVertices(scene_vertex_buffer);
@@ -103,7 +103,7 @@ int main() {
 	RenderPass renderPass = RenderPass();
 	GraphicPipeline* renderPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 	VertexShaderModule* renderVertex = new VertexShaderModule(prefix+"Data/Shaders/Shadow/scene.vert.spv");
-	renderPipeline->setVextexModule(renderVertex);
+	renderPipeline->setVertexModule(renderVertex);
 
 	FragmentShaderModule* renderFrag = new FragmentShaderModule(prefix+"Data/Shaders/Shadow/scene.frag.spv");
 	renderPipeline->setFragmentModule(renderFrag);

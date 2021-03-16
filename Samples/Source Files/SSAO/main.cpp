@@ -210,7 +210,7 @@ int main() {
 	VertexShaderModule* blurVert = new VertexShaderModule(prefix+"Data/Shaders/SSAO/blur.vert.spv");
 	FragmentShaderModule* blurFrag = new FragmentShaderModule(prefix+"Data/Shaders/SSAO/blur.frag.spv");
 
-	blurPipeline.setVextexModule(blurVert);
+	blurPipeline.setVertexModule(blurVert);
 	blurPipeline.setFragmentModule(blurFrag);
 
 	blurPipeline.addFrameBuffer(SSAO,VK_SHADER_STAGE_FRAGMENT_BIT, 0, 0);

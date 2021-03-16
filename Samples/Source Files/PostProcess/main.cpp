@@ -107,7 +107,7 @@ int main() {
 	
 	GraphicPipeline* sphereRenderPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 	VertexShaderModule* sphereVertex = new VertexShaderModule(prefix+"Data/Shaders/PostProcess/model.vert.spv");
-	sphereRenderPipeline->setVextexModule(sphereVertex);
+	sphereRenderPipeline->setVertexModule(sphereVertex);
 
 	FragmentShaderModule* sphereFrag = new FragmentShaderModule(prefix+"Data/Shaders/PostProcess/model.frag.spv");
 	sphereRenderPipeline->setFragmentModule(sphereFrag);
@@ -121,7 +121,7 @@ int main() {
 	GraphicPipeline* skyRenderPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
 	VertexShaderModule* skyVertex = new VertexShaderModule(prefix+"Data/Shaders/PostProcess/skybox.vert.spv");
-	skyRenderPipeline->setVextexModule(skyVertex);
+	skyRenderPipeline->setVertexModule(skyVertex);
 
 	FragmentShaderModule* skyFrag = new FragmentShaderModule(prefix+"Data/Shaders/PostProcess/skybox.frag.spv");
 	skyRenderPipeline->setFragmentModule(skyFrag);
@@ -141,7 +141,7 @@ int main() {
 
 	GraphicPipeline* postProcessPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 	VertexShaderModule* postProcessVertex = new VertexShaderModule(prefix+"Data/Shaders/PostProcess/postprocess.vert.spv");
-	postProcessPipeline->setVextexModule(postProcessVertex);
+	postProcessPipeline->setVertexModule(postProcessVertex);
 
 	FragmentShaderModule* postProcessFrag = new FragmentShaderModule(prefix+"Data/Shaders/PostProcess/postprocess.frag.spv");
 	postProcessPipeline->setFragmentModule(postProcessFrag);
