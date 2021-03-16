@@ -298,7 +298,7 @@ int main() {
 		
 		VkSwapchainKHR& swapchain = s->getHandle();
 
-		SwapChainImage& swapChainImage = s->AcquireImage();
+		SwapChainImage& swapChainImage = s->acquireImage();
 
 		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
 		wait_semaphore_infos.push_back({

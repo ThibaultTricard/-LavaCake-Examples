@@ -212,7 +212,7 @@ int main() {
 		VkSwapchainKHR& swapchain = s->getHandle();
 		VkExtent2D size = s->size();
 
-		SwapChainImage& image = s->AcquireImage();
+		SwapChainImage& image = s->acquireImage();
 		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
 		wait_semaphore_infos.push_back({
 			image.getSemaphore(),																	// VkSemaphore            Semaphore

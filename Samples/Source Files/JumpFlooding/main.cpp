@@ -152,7 +152,7 @@ int main() {
 		cmbBuff->submit(queue, {}, {});
 		
 		pass++;
-		SwapChainImage& image = s->AcquireImage();
+		SwapChainImage& image = s->acquireImage();
 
 		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
 		wait_semaphore_infos.push_back({
