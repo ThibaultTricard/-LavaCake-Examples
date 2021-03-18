@@ -77,7 +77,7 @@ int main() {
 	// Skybox
 	GraphicPipeline* skybox = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 	VertexShaderModule* skyboxVertex = new VertexShaderModule(prefix+"Data/Shaders/ReflectionRefraction/skybox.vert.spv");
-	skybox->setVextexModule(skyboxVertex);
+	skybox->setVertexModule(skyboxVertex);
 	FragmentShaderModule* skyboxFrag = new FragmentShaderModule(prefix+"Data/Shaders/ReflectionRefraction/skybox.frag.spv");
 	skybox->setFragmentModule(skyboxFrag);
 	skybox->setVertices(v);
@@ -88,7 +88,7 @@ int main() {
 	// teapot
 	GraphicPipeline* teapotPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 	VertexShaderModule* vertex = new VertexShaderModule(prefix+"Data/Shaders/ReflectionRefraction/model.vert.spv");
-	teapotPipeline->setVextexModule(vertex);
+	teapotPipeline->setVertexModule(vertex);
 	FragmentShaderModule* frag = new FragmentShaderModule(prefix+"Data/Shaders/ReflectionRefraction/model.frag.spv");
 	teapotPipeline->setFragmentModule(frag);
 	teapotPipeline->setVertices(teapot_vertex_buffer);

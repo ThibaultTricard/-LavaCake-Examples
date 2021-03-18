@@ -24,7 +24,7 @@ int main() {
 
 
 	Window w("LavaCake : SSAO", 1280, 720);
-	glfwSetWindowPos(w.m_window, 2000, 100);
+	//glfwSetWindowPos(w.m_window, 2000, 100);
 	Mouse* mouse = Mouse::getMouse();
 	Device* d = Device::getDevice();
 	d->initDevices(0, 1, w.m_windowParams);
@@ -63,7 +63,7 @@ int main() {
 	GraphicPipeline* Gpipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
 	VertexShaderModule* Gvertex = new  VertexShaderModule(prefix+"Data/Shaders/SSAO/Gbuffer.vert.spv");
-	Gpipeline->setVextexModule(Gvertex);
+	Gpipeline->setVertexModule(Gvertex);
 
 	FragmentShaderModule* Gfragment = new  FragmentShaderModule(prefix+"Data/Shaders/SSAO/Gbuffer.frag.spv");
 	Gpipeline->setFragmentModule(Gfragment);
@@ -176,7 +176,7 @@ int main() {
 
 	SSAOpipeline->addUniformBuffer(SSAOuni, VK_SHADER_STAGE_FRAGMENT_BIT, 4);
 
-	SSAOpipeline->setVextexModule(SSAOvertex);
+	SSAOpipeline->setVertexModule(SSAOvertex);
 	SSAOpipeline->setFragmentModule(SSAOfragment);
 	//SSAOpipeline->SetCullMode();
 
@@ -249,7 +249,7 @@ int main() {
 	VertexShaderModule* lightingVert = new VertexShaderModule(prefix+"Data/Shaders/SSAO/lighting.vert.spv");
 	FragmentShaderModule* lightingFrag = new FragmentShaderModule(prefix+"Data/Shaders/SSAO/lighting.frag.spv");
 
-	lightingPipeline.setVextexModule(lightingVert);
+	lightingPipeline.setVertexModule(lightingVert);
 	lightingPipeline.setFragmentModule(lightingFrag);
 
 	lightingPipeline.addFrameBuffer(G, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 0);
