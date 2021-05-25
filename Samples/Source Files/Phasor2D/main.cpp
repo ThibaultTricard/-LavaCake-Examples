@@ -14,6 +14,27 @@ std::string prefix ="../";
 std::string prefix ="";
 #endif
 
+vec2f slerp(vec2f A, vec2f B, float i) {
+	float LA = sqrt(A[0]* A[0] + A[1]* A[1]);
+	vec2f NA = A / LA;
+
+	float LB = sqrt(B[0] * B[0] + B[1] * B[1]);
+	vec2f NB = B / LB;
+
+	float d = NA[0]*NB[0] + NA[1] * NB[1];
+
+	d = min(max(d, -1.0), 1.0);
+	
+	float theta = acos(d) *(i);
+	vec2f RV = NB - NA * d; 
+	float LR = (RV[0] * RV[0] + RV[1] * RV[1]);
+	if (LR != 0.0f) {
+		RV = RV / (RV[0] * RV[0] + RV[1] * RV[1]);
+	}
+	return ((NA * cos(theta)) + (RV * sin(theta))) * (LA * (1.0f - i) + LB * i);
+
+}
+
 int main() {
 
 	int nbFrames = 3;
@@ -67,20 +88,32 @@ int main() {
   
   Helpers::ABBox<2> phasorBBox(vec2f({0.0f, 0.0f}), vec2f({10.0f, 10.0f}));
   
-  std::vector<float> fvec ={1.0f,1.0f,1.0f,1.0f};
+	float freq = 1.0f;
+
+  std::vector<float> fvec ={ 6,1,1,6 };
   std::vector<vec2f> dvec ={
-    vec2f({1.0f,1.0f}),vec2f({1.0f,1.0f}),
-    vec2f({1.0f,1.0f}),vec2f({1.0f,1.0f})
-    
+    vec2f({0.0f,1.0f}),vec2f({0.0f,1.0f}),
+    vec2f({1.0f,0.0f}),vec2f({1.0f,0.0f})
   };
   
+
+	
+
   Helpers::Field2DGrid<float>* F = new Helpers::Field2DGrid<float>(fvec, 2, 2, phasorBBox);
-  Helpers::Field2DGrid<vec2f>* D = new Helpers::Field2DGrid<vec2f>(dvec, 2, 2, phasorBBox);
-  Phasor2D ph(phasorBBox, F, 1.0f, D);
+  Helpers::Field2DGrid<vec2f>* D = new Helpers::Field2DGrid<vec2f>(dvec, 2, 2, phasorBBox, slerp);
+
+	F->sample({ 0.0f,0.0f });
+	F->sample({ 0.0f,5.0f });
+	F->sample({ 5.0f,0.0f });
+	F->sample({ 5.0f,5.0f });
+
+
+  Phasor2D ph(phasorBBox, F, freq, D);
   
   
+	
   ph.init(queue, commandBuffer[0]);
-  ph.phaseOptimisation(queue, commandBuffer[0], 20);
+  ph.phaseOptimisation(queue, commandBuffer[0], 100);
   ph.sample(queue, commandBuffer[0], phasorBBox, {512,512});
 
   Framework::Buffer* phasorBuffer = ph.getSampleBuffer();
