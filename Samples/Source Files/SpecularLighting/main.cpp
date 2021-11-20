@@ -46,9 +46,9 @@ int main() {
 
 	//uniform buffer
 	UniformBuffer* b = new UniformBuffer();
-	mat4 proj = Helpers::PreparePerspectiveProjectionMatrix(static_cast<float>(size.width) / static_cast<float>(size.height),
+	mat4 proj = PreparePerspectiveProjectionMatrix(static_cast<float>(size.width) / static_cast<float>(size.height),
 		50.0f, 0.5f, 10.0f);
-	mat4 modelView = Helpers::PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
+	mat4 modelView = PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
 	b->addVariable("modelView", modelView);
 	b->addVariable("projection", proj);
 	b->end();
@@ -69,7 +69,8 @@ int main() {
 	FragmentShaderModule* frag = new FragmentShaderModule(prefix+"Data/Shaders/SpecularLighting/shader.frag.spv");
 	pipeline->setFragmentModule(frag);
 	pipeline->addPushContant(constant, VK_SHADER_STAGE_FRAGMENT_BIT);
-	pipeline->setVertices(v);
+	pipeline->setVerticesInfo(v->getBindingDescriptions(), v->getAttributeDescriptions(), v->primitiveTopology());
+	pipeline->setVertices({ v });
 	pipeline->addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
 
 	SubpassAttachment SA;
@@ -109,12 +110,12 @@ int main() {
 			polars[1] -= float((mouse->position[1] - (*lastMousePos)[1]) / 512.0f) * 360;
 
 			updateUniformBuffer = true;
-			modelView = Helpers::Identity();
+			modelView = Identity();
 
-			modelView = modelView * Helpers::PrepareTranslationMatrix(0.0f, 0.0f,  - 4.0f);
+			modelView = modelView * PrepareTranslationMatrix(0.0f, 0.0f,  - 4.0f);
 
-			modelView = modelView * Helpers::PrepareRotationMatrix(-float(polars[0]), vec3f({ 0 , 1, 0 }));
-			modelView = modelView * Helpers::PrepareRotationMatrix(float(polars[1]), vec3f({ 1 , 0, 0 }));
+			modelView = modelView * PrepareRotationMatrix(-float(polars[0]), vec3f({ 0 , 1, 0 }));
+			modelView = modelView * PrepareRotationMatrix(float(polars[1]), vec3f({ 1 , 0, 0 }));
 			//std::cout << w.m_mouse.position[0] << std::endl;
 			b->setVariable("modelView", modelView);
 			lastMousePos = new vec2d({ mouse->position[0], mouse->position[1] });

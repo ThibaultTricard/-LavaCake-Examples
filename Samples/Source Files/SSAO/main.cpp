@@ -51,9 +51,9 @@ int main() {
 
 	//uniform buffer
 	UniformBuffer* b = new UniformBuffer();
-	mat4 proj = Helpers::PreparePerspectiveProjectionMatrix(static_cast<float>(size.width) / static_cast<float>(size.height),
+	mat4 proj = PreparePerspectiveProjectionMatrix(static_cast<float>(size.width) / static_cast<float>(size.height),
 		50.0f, 0.01f, 5.0f);
-	mat4 modelView = Helpers::PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
+	mat4 modelView = PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
 	b->addVariable("modelView", modelView);
 	b->addVariable("projection", proj);
 	b->end();
@@ -68,8 +68,8 @@ int main() {
 	FragmentShaderModule* Gfragment = new  FragmentShaderModule(prefix+"Data/Shaders/SSAO/Gbuffer.frag.spv");
 	Gpipeline->setFragmentModule(Gfragment);
 
-
-	Gpipeline->setVertices(vertexBuffer);
+	Gpipeline->setVerticesInfo(vertexBuffer->getBindingDescriptions(), vertexBuffer->getAttributeDescriptions(), vertexBuffer->primitiveTopology());
+	Gpipeline->setVertices({ vertexBuffer });
 	Gpipeline->addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
 
 	
@@ -168,7 +168,8 @@ int main() {
 	VertexShaderModule* SSAOvertex = new VertexShaderModule(prefix+"Data/Shaders/SSAO/SSAO.vert.spv");
 	FragmentShaderModule* SSAOfragment = new FragmentShaderModule(prefix+"Data/Shaders/SSAO/SSAO.frag.spv");
 
-	SSAOpipeline->setVertices(quadBuffer);
+	SSAOpipeline->setVerticesInfo(quadBuffer->getBindingDescriptions(), quadBuffer->getAttributeDescriptions(), quadBuffer->primitiveTopology());
+	SSAOpipeline->setVertices({quadBuffer});
 
 	SSAOpipeline->addFrameBuffer(G, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 0);
 	SSAOpipeline->addFrameBuffer(G, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1);
@@ -205,7 +206,9 @@ int main() {
 
 	GraphicPipeline blurPipeline (vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
-	blurPipeline.setVertices(quadBuffer);
+
+	blurPipeline.setVerticesInfo(quadBuffer->getBindingDescriptions(), quadBuffer->getAttributeDescriptions(), quadBuffer->primitiveTopology());
+	blurPipeline.setVertices({ quadBuffer });
 
 	VertexShaderModule* blurVert = new VertexShaderModule(prefix+"Data/Shaders/SSAO/blur.vert.spv");
 	FragmentShaderModule* blurFrag = new FragmentShaderModule(prefix+"Data/Shaders/SSAO/blur.frag.spv");
@@ -244,7 +247,8 @@ int main() {
 
 	GraphicPipeline lightingPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
-	lightingPipeline.setVertices(quadBuffer);
+	lightingPipeline.setVertices({ quadBuffer });
+	lightingPipeline.setVerticesInfo(quadBuffer->getBindingDescriptions(), quadBuffer->getAttributeDescriptions(), quadBuffer->primitiveTopology());
 
 	VertexShaderModule* lightingVert = new VertexShaderModule(prefix+"Data/Shaders/SSAO/lighting.vert.spv");
 	FragmentShaderModule* lightingFrag = new FragmentShaderModule(prefix+"Data/Shaders/SSAO/lighting.frag.spv");
@@ -314,12 +318,12 @@ int main() {
 			polars[1] -= float((mouse->position[1] - (*lastMousePos)[1]) / 512.0f) * 360;
 
 			updateUniform = true;
-			modelView = Helpers::Identity();
+			modelView = Identity();
 
-			modelView = modelView * Helpers::PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
+			modelView = modelView * PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
 
-			modelView = modelView * Helpers::PrepareRotationMatrix(polars[0], vec3f({ 0 , 1, 0 }));
-			modelView = modelView * Helpers::PrepareRotationMatrix(polars[1], vec3f({ 1 , 0, 0 }));
+			modelView = modelView * PrepareRotationMatrix(polars[0], vec3f({ 0 , 1, 0 }));
+			modelView = modelView * PrepareRotationMatrix(polars[1], vec3f({ 1 , 0, 0 }));
 			//std::cout << w.m_mouse.position[0] << std::endl;
 			b->setVariable("modelView", modelView);
 			lastMousePos = new vec2d({ mouse->position[0], mouse->position[1] });
@@ -346,7 +350,7 @@ int main() {
 		ImGui::End();
 
 
-		gui->prepareGui(d->getGraphicQueue(0), &cmdBuf);
+		gui->prepareGui(d->getGraphicQueue(0), cmdBuf);
 
 		
 

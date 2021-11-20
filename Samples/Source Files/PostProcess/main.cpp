@@ -73,9 +73,9 @@ int main() {
 
 	//Uniform Buffer
 	UniformBuffer* uniforms = new UniformBuffer();
-	mat4 proj = Helpers::PreparePerspectiveProjectionMatrix(static_cast<float>(size.width) / static_cast<float>(size.height),
+	mat4 proj = PreparePerspectiveProjectionMatrix(static_cast<float>(size.width) / static_cast<float>(size.height),
 		50.0f, 0.5f, 10.0f);
-	mat4 modelView = Helpers::PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
+	mat4 modelView = PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
 	uniforms->addVariable("modelView", modelView);
 	uniforms->addVariable("projection",proj);
 	uniforms->end();
@@ -112,7 +112,9 @@ int main() {
 	FragmentShaderModule* sphereFrag = new FragmentShaderModule(prefix+"Data/Shaders/PostProcess/model.frag.spv");
 	sphereRenderPipeline->setFragmentModule(sphereFrag);
 
-	sphereRenderPipeline->setVertices(sphere_vertex_buffer);
+	sphereRenderPipeline->setVerticesInfo(sphere_vertex_buffer->getBindingDescriptions(), sphere_vertex_buffer->getAttributeDescriptions(), sphere_vertex_buffer->primitiveTopology());
+
+	sphereRenderPipeline->setVertices({ sphere_vertex_buffer });
 	sphereRenderPipeline->addUniformBuffer(uniforms, VK_SHADER_STAGE_VERTEX_BIT, 0);
 	sphereRenderPipeline->addTextureBuffer(skyCubeMap, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 	sphereRenderPipeline->addPushContant(cameraConstant, VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -126,8 +128,9 @@ int main() {
 	FragmentShaderModule* skyFrag = new FragmentShaderModule(prefix+"Data/Shaders/PostProcess/skybox.frag.spv");
 	skyRenderPipeline->setFragmentModule(skyFrag);
 
+	skyRenderPipeline->setVerticesInfo(sky_vertex_buffer->getBindingDescriptions(), sky_vertex_buffer->getAttributeDescriptions(), sky_vertex_buffer->primitiveTopology());
 
-	skyRenderPipeline->setVertices(sky_vertex_buffer);
+	skyRenderPipeline->setVertices({ sky_vertex_buffer });
 	skyRenderPipeline->addUniformBuffer(uniforms, VK_SHADER_STAGE_VERTEX_BIT, 0);
 	skyRenderPipeline->addTextureBuffer(skyCubeMap, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 	skyRenderPipeline->SetCullMode(VK_CULL_MODE_FRONT_BIT);
@@ -147,7 +150,10 @@ int main() {
 	postProcessPipeline->setFragmentModule(postProcessFrag);
 
 	postProcessPipeline->addPushContant(timeConstant, VK_SHADER_STAGE_FRAGMENT_BIT);
-	postProcessPipeline->setVertices(quad_vertex_buffer);
+	
+	postProcessPipeline->setVerticesInfo(quad_vertex_buffer->getBindingDescriptions(), quad_vertex_buffer->getAttributeDescriptions(), quad_vertex_buffer->primitiveTopology());
+
+	postProcessPipeline->setVertices({ quad_vertex_buffer });
 	
 
 	
@@ -230,12 +236,12 @@ int main() {
 			polars[1] -= float((mouse->position[1] - (*lastMousePos)[1]) / 512.0f) * 360;
 
 			updateUniformBuffer = true;
-			modelView = Helpers::Identity();
+			modelView = Identity();
 
-			modelView = modelView * Helpers::PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
+			modelView = modelView * PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
 
-			modelView = modelView * Helpers::PrepareRotationMatrix(-float(polars[0]), vec3f({ 0 , 1, 0 }));
-			modelView = modelView * Helpers::PrepareRotationMatrix(float(polars[1]), vec3f({ 1 , 0, 0 }));
+			modelView = modelView * PrepareRotationMatrix(-float(polars[0]), vec3f({ 0 , 1, 0 }));
+			modelView = modelView * PrepareRotationMatrix(float(polars[1]), vec3f({ 1 , 0, 0 }));
 			//std::cout << w.m_mouse.position[0] << std::endl;
 			uniforms->setVariable("modelView", modelView);
 			lastMousePos = new vec2d({ mouse->position[0], mouse->position[1] });

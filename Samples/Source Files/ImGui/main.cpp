@@ -52,7 +52,11 @@ int main() {
 
 	pipeline->setVertexModule(vertexShader);
 	pipeline->setFragmentModule(fragmentShader);
-	pipeline->setVertices(triangle_vertex_buffer);
+	pipeline->setVerticesInfo(triangle_vertex_buffer->getBindingDescriptions(), triangle_vertex_buffer->getAttributeDescriptions(), triangle_vertex_buffer->primitiveTopology());
+
+	pipeline->setVertices({ triangle_vertex_buffer });
+
+
 
 	SubpassAttachment SA;
 	SA.showOnScreen = true;
@@ -139,7 +143,7 @@ int main() {
 		}
 
 		
-		gui->prepareGui(d->getGraphicQueue(0), &commandBuffer[f]);
+		gui->prepareGui(d->getGraphicQueue(0), commandBuffer[f]);
 		
 		
 		VkDevice logical = d->getLogicalDevice();

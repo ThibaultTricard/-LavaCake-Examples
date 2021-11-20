@@ -62,10 +62,10 @@ int main() {
 
 	//uniform buffer
 	UniformBuffer* b = new UniformBuffer();
-	mat4 proj = LavaCake::Helpers::PreparePerspectiveProjectionMatrix(static_cast<float>(size.width) / static_cast<float>(size.height),
+	mat4 proj = PreparePerspectiveProjectionMatrix(static_cast<float>(size.width) / static_cast<float>(size.height),
 		50.0f, 0.5f, 10.0f);
 
-	mat4 modelView = Helpers::PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
+	mat4 modelView = PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
 	b->addVariable("modelView", modelView);
 	b->addVariable("projection", proj);
 	b->end();
@@ -80,7 +80,8 @@ int main() {
 	skybox->setVertexModule(skyboxVertex);
 	FragmentShaderModule* skyboxFrag = new FragmentShaderModule(prefix+"Data/Shaders/ReflectionRefraction/skybox.frag.spv");
 	skybox->setFragmentModule(skyboxFrag);
-	skybox->setVertices(v);
+	skybox->setVerticesInfo(v->getBindingDescriptions(), v->getAttributeDescriptions(), v->primitiveTopology());
+	skybox->setVertices({ v });
 	skybox->addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
 	skybox->addTextureBuffer(cubeMap, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 	skybox->SetCullMode(VK_CULL_MODE_FRONT_BIT);
@@ -91,7 +92,8 @@ int main() {
 	teapotPipeline->setVertexModule(vertex);
 	FragmentShaderModule* frag = new FragmentShaderModule(prefix+"Data/Shaders/ReflectionRefraction/model.frag.spv");
 	teapotPipeline->setFragmentModule(frag);
-	teapotPipeline->setVertices(teapot_vertex_buffer);
+	teapotPipeline->setVerticesInfo(teapot_vertex_buffer->getBindingDescriptions(), teapot_vertex_buffer->getAttributeDescriptions(), teapot_vertex_buffer->primitiveTopology());
+	teapotPipeline->setVertices({ teapot_vertex_buffer });
 	teapotPipeline->addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
 	teapotPipeline->addTextureBuffer(cubeMap, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 	teapotPipeline->SetCullMode(VK_CULL_MODE_BACK_BIT);
@@ -139,12 +141,12 @@ int main() {
 			polars[1] -= float((mouse->position[1] - (*lastMousePos)[1]) / 512.0f) * 360;
 
 			updateUniformBuffer = true;
-			modelView = Helpers::Identity();
+			modelView = Identity();
 
-			modelView = modelView * Helpers::PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
+			modelView = modelView * PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
 
-			modelView = modelView * Helpers::PrepareRotationMatrix(-float(polars[0]), vec3f({ 0 , 1, 0 }));
-			modelView = modelView * Helpers::PrepareRotationMatrix(float(polars[1]), vec3f({ 1 , 0, 0 }));
+			modelView = modelView * PrepareRotationMatrix(-float(polars[0]), vec3f({ 0 , 1, 0 }));
+			modelView = modelView * PrepareRotationMatrix(float(polars[1]), vec3f({ 1 , 0, 0 }));
 			//std::cout << w.m_mouse.position[0] << std::endl;
 			b->setVariable("modelView", modelView);
 			lastMousePos = new vec2d({ mouse->position[0], mouse->position[1] });
@@ -189,7 +191,7 @@ int main() {
 			s->getHandle(),                                    // VkSwapchainKHR         Swapchain
 			image.getIndex()                                   // uint32_t               ImageIndex
 		};
-		if (!PresentImage(present_queue, { commandBuffer[f].getSemaphore(1) }, { present_info })) {
+		if (!PresentImage(present_queue, { commandBuffer[f].getSemaphore(0) }, { present_info })) {
 			continue;
 		}
 	}

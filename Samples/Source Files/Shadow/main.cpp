@@ -58,7 +58,7 @@ int main() {
 
 	//uniform buffer
 	UniformBuffer* b = new UniformBuffer();
-	mat4 proj = Helpers::PreparePerspectiveProjectionMatrix(static_cast<float>(size.width) / static_cast<float>(size.height),
+	mat4 proj = PreparePerspectiveProjectionMatrix(static_cast<float>(size.width) / static_cast<float>(size.height),
 		50.0f, 0.5f, 10.0f);
 	mat4 modelView = mat4({ 0.9981f, -0.0450f, 0.0412f, 0.0000f, 0.0000f, 0.6756f, 0.7373f, 0.0000f, -0.0610f, -0.7359f, 0.6743f, 0.0000f, -0.0000f, -0.0000f, -4.0000f, 1.0000f });
 	mat4 lightView = mat4({ 1.0f,0.0f,0.0f,0.0f,0.0f,0.173648223f ,0.984807730f,0.0f,0.0f, -0.984807730f, 0.173648223f ,0.0f,0.0f,0.0f,-3.99999976f ,1.0f });
@@ -84,8 +84,8 @@ int main() {
 	VertexShaderModule* shadowVertex = new VertexShaderModule(prefix+"Data/Shaders/Shadow/shadow.vert.spv");
 	shadowPipeline->setVertexModule(shadowVertex);
 
-
-	shadowPipeline->setVertices(scene_vertex_buffer);
+	shadowPipeline->setVerticesInfo(scene_vertex_buffer->getBindingDescriptions(), scene_vertex_buffer->getAttributeDescriptions(), scene_vertex_buffer->primitiveTopology());
+	shadowPipeline->setVertices({ scene_vertex_buffer });
 	shadowPipeline->addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
 
 	SubpassAttachment SA;
@@ -111,7 +111,8 @@ int main() {
 	
 	renderPipeline->addPushContant(constant, VK_SHADER_STAGE_VERTEX_BIT);
 
-	renderPipeline->setVertices(scene_vertex_buffer);
+	renderPipeline->setVerticesInfo(scene_vertex_buffer->getBindingDescriptions(), scene_vertex_buffer->getAttributeDescriptions(), scene_vertex_buffer->primitiveTopology());
+	renderPipeline->setVertices({ scene_vertex_buffer });
 	renderPipeline->addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
 
 	renderPipeline->addFrameBuffer(shadow_map_buffer, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
@@ -167,12 +168,12 @@ int main() {
 			polars[1] -= float((mouse->position[1] - (*lastMousePos)[1]) / 512.0f) * 360;
 
 			updateUniformBuffer = true;
-			modelView = Helpers::Identity();
+			modelView = Identity();
 
-			modelView = modelView * Helpers::PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
+			modelView = modelView * PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
 
-			modelView = modelView * Helpers::PrepareRotationMatrix(-float(polars[0]), vec3f({ 0 , 1, 0 }));
-			modelView = modelView * Helpers::PrepareRotationMatrix(float(polars[1]), vec3f({ 1 , 0, 0 }));
+			modelView = modelView * PrepareRotationMatrix(-float(polars[0]), vec3f({ 0 , 1, 0 }));
+			modelView = modelView * PrepareRotationMatrix(float(polars[1]), vec3f({ 1 , 0, 0 }));
 			//std::cout << w.m_mouse.position[0] << std::endl;
 			b->setVariable("modelView", modelView);
 			lastMousePos = new vec2d({ mouse->position[0], mouse->position[1] });

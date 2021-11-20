@@ -92,15 +92,15 @@ int main() {
 
   std::vector<float> fvec ={ 6,1,1,6 };
   std::vector<vec2f> dvec ={
-    vec2f({0.0f,1.0f}),vec2f({0.0f,1.0f}),
-    vec2f({1.0f,0.0f}),vec2f({1.0f,0.0f})
+    vec2f({0.0f,1.0f}),vec2f({-1.0f,0.0f}),
+    vec2f({1.0f,0.0f}),vec2f({0.0f,-1.0f})
   };
   
 
 	
 
   Helpers::Field2DGrid<float>* F = new Helpers::Field2DGrid<float>(fvec, 2, 2, phasorBBox);
-  Helpers::Field2DGrid<vec2f>* D = new Helpers::Field2DGrid<vec2f>(dvec, 2, 2, phasorBBox, slerp);
+  Helpers::Field2DGrid<vec2f>* D = new Helpers::Field2DGrid<vec2f>(dvec, 2, 2, phasorBBox);
 
 	F->sample({ 0.0f,0.0f });
 	F->sample({ 0.0f,5.0f });
@@ -128,7 +128,8 @@ int main() {
 	Framework::FragmentShaderModule* fragmentShader = new Framework::FragmentShaderModule(prefix+"Data/Shaders/Phasor2D/shader.frag.spv");
 	pipeline->setVertexModule(vertexShader);
 	pipeline->setFragmentModule(fragmentShader);
-	pipeline->setVertices(quad_vertex_buffer);
+	pipeline->setVerticesInfo(quad_vertex_buffer->getBindingDescriptions(), quad_vertex_buffer->getAttributeDescriptions(), quad_vertex_buffer->primitiveTopology());
+	pipeline->setVertices({ quad_vertex_buffer });
 	pipeline->addTexelBuffer(phasorBuffer, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 	pipeline->addUniformBuffer(sizeBuffer, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 
