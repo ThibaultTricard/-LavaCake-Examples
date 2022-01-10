@@ -1,7 +1,6 @@
 #include "Framework/Framework.h"
 #include "AllHeaders.h"
 #include "Common.h"
-#include "VulkanDestroyer.h"
 #include "Geometry/meshLoader.h"
 
 using namespace LavaCake;
@@ -28,15 +27,14 @@ int main() {
 	s->init();
 	VkExtent2D size = s->size();
 	Queue* queue = d->getGraphicQueue(0);
-	VkQueue& present_queue = d->getPresentQueue()->getHandle();
+	auto presentQueue = d->getPresentQueue();
 	std::vector<CommandBuffer> commandBuffer = std::vector<CommandBuffer>(nbFrames);
 	for (int i = 0; i < nbFrames; i++) {
 		commandBuffer[i].addSemaphore();
 	}
 
 	//Normal map
-	TextureBuffer* normalMap = new TextureBuffer(prefix+"Data/Textures/normal_map.png", 4);
-	normalMap->allocate(queue, commandBuffer[0]);
+	Image* normalMap = createTextureBuffer(queue, commandBuffer[0],prefix+"Data/Textures/normal_map.png", 4);
 
 	//vertex buffer
 	//knot mesh
@@ -170,13 +168,7 @@ int main() {
 		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(0) });
 	
 
-		PresentInfo present_info = {
-			swapchain,                                    // VkSwapchainKHR         Swapchain
-			image.getIndex()                              // uint32_t               ImageIndex
-		};
-		if (!PresentImage(present_queue, { commandBuffer[f].getSemaphore(0) }, { present_info })) {
-			continue;
-		}
+		s->presentImage(presentQueue, image, { commandBuffer[f].getSemaphore(0) });
 	}
 	d->end();
 }

@@ -1,7 +1,6 @@
 #include "Framework/Framework.h"
 #include "AllHeaders.h"
 #include "Common.h"
-#include "VulkanDestroyer.h"
 #include "Geometry/meshLoader.h"
 
 using namespace LavaCake;
@@ -298,7 +297,7 @@ int main() {
 		w.updateInput();
 
 		VkDevice logical = d->getLogicalDevice();
-		VkQueue& presentQueue = d->getPresentQueue()->getHandle();
+		auto presentQueue = d->getPresentQueue();
 		
 		VkSwapchainKHR& swapchain = s->getHandle();
 
@@ -388,14 +387,7 @@ int main() {
 		cmdBuf.submit(graphicQueue, wait_semaphore_infos, { cmdBuf.getSemaphore(0) });
 		
 
-		PresentInfo present_info = {
-			swapchain,                                    // VkSwapchainKHR         Swapchain
-			swapChainImage.getIndex()                     // uint32_t               ImageIndex
-		};
-
-		if (!PresentImage(presentQueue, { cmdBuf.getSemaphore(0) }, { present_info })) {
-			continue;
-		}
+		s->presentImage(presentQueue, swapChainImage, { cmdBuf.getSemaphore(0) });
 
 	}
 

@@ -1,7 +1,6 @@
 #include "Framework/Framework.h"
 #include "AllHeaders.h"
 #include "Common.h"
-#include "VulkanDestroyer.h"
 #include "Geometry/meshLoader.h"
 
 using namespace LavaCake;
@@ -26,7 +25,7 @@ int main() {
 	s->init();
 	VkDevice logical = d->getLogicalDevice();
 	Queue* queue = d->getGraphicQueue(0);
-	VkQueue& present_queue = d->getPresentQueue()->getHandle();
+	auto presentQueue = d->getPresentQueue();
 
 	VkExtent2D size = s->size();
 
@@ -205,13 +204,7 @@ int main() {
 
 		
 
-		PresentInfo present_info = {
-			swapchain,                                    // VkSwapchainKHR         Swapchain
-			image.getIndex()                              // uint32_t               ImageIndex
-		};
-		if (!PresentImage(queue->getHandle(), { commandBuffer[f].getSemaphore(1) }, { present_info })) {
-			continue;
-		}
+		s->presentImage(presentQueue, image, { commandBuffer[f].getSemaphore(0) });
 
 	}
 	d->end();

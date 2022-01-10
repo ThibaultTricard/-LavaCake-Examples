@@ -26,7 +26,7 @@ int main() {
 	s->init(); 
 	VkExtent2D size = s->size();
 	Queue* queue = d->getGraphicQueue(0);
-	VkQueue& present_queue = d->getPresentQueue()->getHandle();
+	PresentationQueue* presentQueue = d->getPresentQueue();
 	std::vector<CommandBuffer> commandBuffer = std::vector<CommandBuffer>(nbFrames);
 	for (int i = 0; i < nbFrames; i++) {
 		commandBuffer[i].addSemaphore();
@@ -177,15 +177,7 @@ int main() {
 		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(0) });
 		
 
-
-		PresentInfo present_info = {
-			swapchain,                                    // VkSwapchainKHR         Swapchain
-			image.getIndex()                              // uint32_t               ImageIndex
-		};
-
-		if (!PresentImage(present_queue, { commandBuffer[f].getSemaphore(0) }, { present_info })) {
-			continue;
-		}
+		s->presentImage(presentQueue, image, { commandBuffer[f].getSemaphore(0) });
 
 		debug++;
 	}

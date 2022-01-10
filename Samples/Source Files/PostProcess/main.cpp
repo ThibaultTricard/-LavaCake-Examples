@@ -1,7 +1,6 @@
 #include "Framework/Framework.h"
 #include "AllHeaders.h"
 #include "Common.h"
-#include "VulkanDestroyer.h"
 #include "Geometry/meshLoader.h"
 
 #ifdef __APPLE__
@@ -26,7 +25,7 @@ int main() {
 	s->init();
 	VkExtent2D size = s->size();
 	Queue* queue = d->getGraphicQueue(0);
-	VkQueue& present_queue = d->getPresentQueue()->getHandle();
+	auto presentQueue = d->getPresentQueue();
 	std::vector<CommandBuffer> commandBuffer = std::vector<CommandBuffer>(nbFrames);
 	for (int i = 0; i < nbFrames; i++) {
 		commandBuffer[i].addSemaphore();
@@ -81,8 +80,7 @@ int main() {
 	uniforms->end();
 
 	//SkyBox texture
-	CubeMap* skyCubeMap = new CubeMap(prefix+"Data/Textures/Skansen/", 4);
-	skyCubeMap->allocate(queue, commandBuffer[0]);
+	Image* skyCubeMap = createCubeMap(queue, commandBuffer[0],prefix+"Data/Textures/Skansen/", 4);
 
 
 
@@ -98,8 +96,8 @@ int main() {
 	cameraConstant->addVariable("camera", camera);
 
 	//Color Attachment
-	Attachment* colorAttachemnt = new Attachment(size.width, size.height, s->imageFormat(), attachmentType::COLOR_ATTACHMENT);
-	colorAttachemnt->allocate();
+	Image* colorAttachemnt = createAttachment(size.width, size.height, s->imageFormat(), attachmentType::COLOR_ATTACHMENT);
+	
 
 	//Render Pass
 	RenderPass renderPass = RenderPass( );
@@ -282,13 +280,7 @@ int main() {
 		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(0) });
 		
 
-		PresentInfo present_info = {
-			swapchain,                                    // VkSwapchainKHR         Swapchain
-			image.getIndex()                              // uint32_t               ImageIndex
-		};
-		if (!PresentImage(present_queue, { commandBuffer[f].getSemaphore(0) }, { present_info })) {
-			continue;
-		}
+		s->presentImage(presentQueue, image, { commandBuffer[f].getSemaphore(0) });
 	}
 
 	d->end();

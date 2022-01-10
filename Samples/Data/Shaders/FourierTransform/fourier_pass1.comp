@@ -27,6 +27,8 @@ void main() {
     if(coord.x < sizeX){
   	 vec3 color = texture(image, vec2(coord)/vec2(sizeX, sizeY)).xyz;
      float l = color.x *0.2126 + color.y * 0.7152  + color.z *0.0722;
+     l = l *2.0 -1.0;
+     l = l*l;
   	 partial[Lxid*2] 	 += l * cos(-2.0* pi* coord.x *(float(gl_WorkGroupID.x) )/ float(sizeX));
   	 partial[Lxid*2+1] += l * sin(-2.0* pi* coord.x *(float(gl_WorkGroupID.x) )/ float(sizeX));
     }

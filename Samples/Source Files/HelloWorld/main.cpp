@@ -1,10 +1,10 @@
 #include "Framework/Framework.h"
 
-
 using namespace LavaCake;
 using namespace LavaCake::Geometry;
 using namespace LavaCake::Framework;
 using namespace LavaCake::Core;
+
 
 #ifdef __APPLE__
 std::string prefix ="../";
@@ -75,7 +75,7 @@ int main() {
 
 	VkExtent2D size = s->size();
 	Queue* queue = d->getGraphicQueue(0);
-	Queue* presentQueue = d->getPresentQueue();
+	PresentationQueue* presentQueue = d->getPresentQueue();
 	CommandBuffer  commandBuffer;
 	commandBuffer.addSemaphore();
 
@@ -97,26 +97,9 @@ int main() {
 	triangle->appendIndex(2);
 
 
-	//we create a indexed triangle mesh with the desired format
-	Mesh_t* triangle2 = new IndexedMesh<TRIANGLE>(format);
-
-	//adding 3 vertices
-	triangle2->appendVertex({ -0.75f, 0.75f, 0.0f, 1.0f , 0.0f , 0.0f });
-	triangle2->appendVertex({ 0.75f,	0.75f , 0.0f, 0.0f , 1.0f	, 0.0f });
-	triangle2->appendVertex({ -1.0f , -1.0f, 0.0f, 0.0f , 0.0f	, 1.0f });
-
-	// we link the 3 vertices to define a triangle
-	triangle2->appendIndex(0);
-	triangle2->appendIndex(1);
-	triangle2->appendIndex(2);
-
-
 	//creating an allocating a vertex buffer
 	triangle_vertex_buffer = new VertexBuffer({ triangle });
 	triangle_vertex_buffer->allocate(queue, commandBuffer);
-
-	auto triangle_vertex_buffer2 = new VertexBuffer({ triangle2 });
-	triangle_vertex_buffer2->allocate(queue, commandBuffer);
 
 
 	auto pass = createRenderPass(queue, commandBuffer);
@@ -155,13 +138,11 @@ int main() {
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
 			});
 
-		pipeline->setVertices({ triangle_vertex_buffer, triangle_vertex_buffer2 });
+		pipeline->setVertices({ triangle_vertex_buffer });
 
 		commandBuffer.beginRecord();
 
 		
-		
-
 		pass->setSwapChainImage(*frameBuffers, image);
 
 		pass->draw(commandBuffer, *frameBuffers, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
@@ -170,15 +151,7 @@ int main() {
 
 		commandBuffer.submit(queue, wait_semaphore_infos, { commandBuffer.getSemaphore(0) });
 
-
-		PresentInfo present_info = {
-			swapchain,                                    // VkSwapchainKHR         Swapchain
-			image.getIndex()                              // uint32_t               ImageIndex
-		};
-
-		if (!PresentImage(presentQueue->getHandle(), { commandBuffer.getSemaphore(0) }, { present_info })) {
-			continue;
-		}
+		s->presentImage(presentQueue, image, { commandBuffer.getSemaphore(0) });
 	}
 	d->end();
 }

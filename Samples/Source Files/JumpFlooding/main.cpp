@@ -20,8 +20,7 @@ int main() {
 	s->init();
 	Queue* queue = d->getGraphicQueue(0);
 
-	VkQueue& present_queue = d->getPresentQueue()->getHandle();
-	VkQueue& compute_queue = d->getComputeQueue(0)->getHandle();
+	PresentationQueue* presentQueue = d->getPresentQueue();
 	CommandBuffer* cmbBuff = new CommandBuffer();
 	cmbBuff->addSemaphore();
 
@@ -178,13 +177,7 @@ int main() {
 		cmbBuff->submit(queue, wait_semaphore_infos, { cmbBuff->getSemaphore(0) });
 		
 
-		PresentInfo present_info = {
-			s->getHandle(),                                    // VkSwapchainKHR         Swapchain
-			image.getIndex()                                   // uint32_t               ImageIndex
-		};
-		if (!PresentImage(present_queue, { cmbBuff->getSemaphore(0) }, { present_info })) {
-			continue;
-		}
+		s->presentImage(presentQueue, image, { cmbBuff->getSemaphore(0) });
 #ifdef _WIN32
 		Sleep(500);
 #endif

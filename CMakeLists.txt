@@ -11,6 +11,7 @@ add_subdirectory(LavaCake)
 ###############################################################
 # Sample projects                                             #
 ###############################################################
+
 file( COPY "${CMAKE_CURRENT_LIST_DIR}/Samples/Data" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}" )
 
 # Sample projects generation

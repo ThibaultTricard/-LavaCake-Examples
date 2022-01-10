@@ -13,7 +13,7 @@ std::string prefix ="";
 #endif
 
 int main() {
-
+	ErrorCheck::PrintError(true, 2);
 	int nbFrames = 3;
 	Framework::ErrorCheck::PrintError(true);
 	Framework::Window w("LavaCake : Fourier Transform", 512, 512);
@@ -23,8 +23,8 @@ int main() {
 	LavaCake::Framework::SwapChain* s = LavaCake::Framework::SwapChain::getSwapChain();
 	s->init();
 
-	Framework::Queue* queue = d->getGraphicQueue(0);
-	VkQueue& present_queue = d->getPresentQueue()->getHandle();
+	Queue* queue = d->getGraphicQueue(0);
+	PresentationQueue* presentQueue = d->getPresentQueue();
 
 	Queue* compute_queue = d->getComputeQueue(0);
 
@@ -57,8 +57,7 @@ int main() {
 	quad_vertex_buffer->allocate(queue, commandBuffer[0]);
 
 	//texture map
-	Framework::TextureBuffer* input = new Framework::TextureBuffer(prefix+"Data/Textures/mandrill.png", 4);
-	input->allocate(queue, commandBuffer[0]);
+	Framework::Image* input = createTextureBuffer(queue, commandBuffer[0], prefix+"Data/Textures/NoThresh.png", 4);
 
 
 	Framework::Buffer* output_pass1 = new Framework::Buffer();
@@ -181,13 +180,7 @@ int main() {
 		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(0) });
 		
 
-		PresentInfo present_info = {
-			s->getHandle(),                                    // VkSwapchainKHR         Swapchain
-			image.getIndex()                                   // uint32_t               ImageIndex
-		};
-		if (!PresentImage(present_queue, { commandBuffer[f].getSemaphore(0) }, { present_info })) {
-			continue;
-		}
+		s->presentImage(presentQueue, image, { commandBuffer[f].getSemaphore(0) });
 	}
 
 	d->end();

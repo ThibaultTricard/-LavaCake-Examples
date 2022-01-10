@@ -1,7 +1,6 @@
 #include "Framework/Framework.h"
 #include "AllHeaders.h"
 #include "Common.h"
-#include "VulkanDestroyer.h"
 #include "Geometry/meshLoader.h"
 #include "Geometry/meshExporter.h"
 
@@ -27,7 +26,7 @@ int main() {
 	SwapChain* s = SwapChain::getSwapChain();
 	s->init();
 	Queue* queue = d->getGraphicQueue(0);
-	VkQueue& present_queue = d->getPresentQueue()->getHandle();
+	auto presentQueue = d->getPresentQueue();
 	VkDevice logical = d->getLogicalDevice();
 	VkExtent2D size = s->size();
 
@@ -38,8 +37,7 @@ int main() {
 	}
 
 	//cubeMap
-	TextureBuffer* cubeMap = new CubeMap(prefix+"Data/Textures/Skansen/", 4);
-	cubeMap->allocate(queue, commandBuffer[0]);
+	Image* cubeMap = createCubeMap(queue, commandBuffer[0],prefix+"Data/Textures/Skansen/", 4);
 
 	//Skybox Data
 
@@ -187,13 +185,7 @@ int main() {
 		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(0) });
 		
 
-		PresentInfo present_info = {
-			s->getHandle(),                                    // VkSwapchainKHR         Swapchain
-			image.getIndex()                                   // uint32_t               ImageIndex
-		};
-		if (!PresentImage(present_queue, { commandBuffer[f].getSemaphore(0) }, { present_info })) {
-			continue;
-		}
+		s->presentImage(presentQueue, image, { commandBuffer[f].getSemaphore(0) });
 	}
 
 	d->end();
