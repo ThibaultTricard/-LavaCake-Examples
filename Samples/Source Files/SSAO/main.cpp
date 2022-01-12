@@ -87,7 +87,7 @@ int main() {
 	
 
 	FrameBuffer* G = new FrameBuffer(size.width, size.height);
-	Gpass.prepareOutputFrameBuffer(*G);
+	Gpass.prepareOutputFrameBuffer(graphicQueue, cmdBuf, *G);
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -193,7 +193,7 @@ int main() {
 
 
 	FrameBuffer* SSAO = new FrameBuffer(size.width, size.height);
-	SSAORenderPass->prepareOutputFrameBuffer(*SSAO);
+	SSAORenderPass->prepareOutputFrameBuffer(graphicQueue, cmdBuf, *SSAO);
 
 
 
@@ -229,7 +229,7 @@ int main() {
 	Blurpass->compile();
 
 	FrameBuffer* BlurBuffer = new FrameBuffer(size.width, size.height);
-	Blurpass->prepareOutputFrameBuffer(*BlurBuffer);
+	Blurpass->prepareOutputFrameBuffer(graphicQueue, cmdBuf,*BlurBuffer);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//																					Lighting																									//
@@ -273,7 +273,7 @@ int main() {
 	Lightingpass->compile();
 
 	FrameBuffer* lightingBuffer = new FrameBuffer(size.width, size.height);
-	Lightingpass->prepareOutputFrameBuffer(*lightingBuffer);
+	Lightingpass->prepareOutputFrameBuffer(graphicQueue, cmdBuf,*lightingBuffer);
 
 
 

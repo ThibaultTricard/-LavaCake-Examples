@@ -124,7 +124,7 @@ int main() {
 	shadowMapPass.addDependencies(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 	shadowMapPass.compile();
 
-	shadowMapPass.prepareOutputFrameBuffer(*shadow_map_buffer);
+	shadowMapPass.prepareOutputFrameBuffer(queue, commandBuffer[0] ,*shadow_map_buffer);
 
 	//Render Pass
 	RenderPass renderPass = RenderPass();
@@ -153,7 +153,7 @@ int main() {
 	//renderPass.addDependencies(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 	renderPass.compile();
 
-	renderPass.prepareOutputFrameBuffer(*scene_buffer);
+	renderPass.prepareOutputFrameBuffer(queue, commandBuffer[0] ,*scene_buffer);
 
 	//Console Render pass
 	RenderPass consolePass = RenderPass();
@@ -187,7 +187,7 @@ int main() {
 	std::vector<FrameBuffer*> frameBuffers;
 	for (int i = 0; i < nbFrames; i++) {
 		frameBuffers.push_back(new FrameBuffer(s->size().width, s->size().height));
-		consolePass.prepareOutputFrameBuffer(*frameBuffers[i]);
+		consolePass.prepareOutputFrameBuffer(queue, commandBuffer[0] ,*frameBuffers[i]);
 	}
 
 
@@ -243,8 +243,6 @@ int main() {
 			lastMousePos = nullptr;
 		}
 
-	
-
 		commandBuffer[f].wait(UINT32_MAX);
 		commandBuffer[f].resetFence();
 		commandBuffer[f].beginRecord();
@@ -257,14 +255,10 @@ int main() {
 
 		shadowMapPass.draw(commandBuffer[f], *shadow_map_buffer, vec2u({ 0,0 }), vec2u({shadowsize, shadowsize }));
 
-
-
 		renderPass.draw(commandBuffer[f], *scene_buffer, vec2u({ 0,0 }), scene_buffer->size(), { { 0.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 0 } });
-
 
 		consolePass.setSwapChainImage(*frameBuffers[f], image);
 		consolePass.draw(commandBuffer[f], *frameBuffers[f], vec2u({ 0,0 }), vec2u({size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
-
 
 		commandBuffer[f].endRecord();
 

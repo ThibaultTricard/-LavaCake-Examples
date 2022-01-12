@@ -57,7 +57,7 @@ int main() {
 	quad_vertex_buffer->allocate(queue, commandBuffer[0]);
 
 	//texture map
-	Framework::Image* input = createTextureBuffer(queue, commandBuffer[0], prefix+"Data/Textures/NoThresh.png", 4);
+	Framework::Image* input = createTextureBuffer(queue, commandBuffer[0], prefix+"Data/Textures/mandrill.png", 4);
 
 
 	Framework::Buffer* output_pass1 = new Framework::Buffer();
@@ -126,7 +126,7 @@ int main() {
 	std::vector<Framework::FrameBuffer*> frameBuffers;
 	for (int i = 0; i < nbFrames; i++) {
 		frameBuffers.push_back(new Framework::FrameBuffer(s->size().width, s->size().height));
-		showPass->prepareOutputFrameBuffer(*frameBuffers[i]);
+		showPass->prepareOutputFrameBuffer(queue, commandBuffer[0], *frameBuffers[i]);
 	}
 
 

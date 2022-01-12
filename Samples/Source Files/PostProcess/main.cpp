@@ -96,7 +96,7 @@ int main() {
 	cameraConstant->addVariable("camera", camera);
 
 	//Color Attachment
-	Image* colorAttachemnt = createAttachment(size.width, size.height, s->imageFormat(), attachmentType::COLOR_ATTACHMENT);
+	Image* colorAttachemnt = createAttachment(queue, commandBuffer[0], size.width, size.height, s->imageFormat(), attachmentType::COLOR_ATTACHMENT);
 	
 
 	//Render Pass
@@ -199,7 +199,7 @@ int main() {
 	std::vector<FrameBuffer*> frameBuffers;
 	for (int i = 0; i < nbFrames; i++) {
 		frameBuffers.push_back(new FrameBuffer(s->size().width, s->size().height));
-		renderPass.prepareOutputFrameBuffer(*frameBuffers[i]);
+		renderPass.prepareOutputFrameBuffer(queue, commandBuffer[0], *frameBuffers[i]);
 	}
 
 	bool updateUniformBuffer = true;

@@ -94,7 +94,7 @@ int main() {
 	std::vector<FrameBuffer*> frameBuffers;
 	for (int i = 0; i < nbFrames; i++) {
 		frameBuffers.push_back(new FrameBuffer(s->size().width, s->size().height));
-		pass.prepareOutputFrameBuffer(*frameBuffers[i]);
+		pass.prepareOutputFrameBuffer(queue, commandBuffer[0], *frameBuffers[i]);
 	}
 
 	bool updateUniformBuffer = true;

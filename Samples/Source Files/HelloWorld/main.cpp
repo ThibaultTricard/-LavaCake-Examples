@@ -105,7 +105,7 @@ int main() {
 	auto pass = createRenderPass(queue, commandBuffer);
 	
 	FrameBuffer* frameBuffers = new FrameBuffer(size.width, size.height);
-	pass->prepareOutputFrameBuffer(*frameBuffers);
+	pass->prepareOutputFrameBuffer(queue, commandBuffer, *frameBuffers);
 
 	while (w.running()) {
 		w.updateInput();
@@ -125,7 +125,7 @@ int main() {
 			pass = createRenderPass(queue, commandBuffer);
 			delete frameBuffers;
 			frameBuffers = new FrameBuffer(size.width, size.height);
-			pass->prepareOutputFrameBuffer(*frameBuffers);
+			pass->prepareOutputFrameBuffer(queue, commandBuffer, *frameBuffers);
 
 			g_resize = false;
 		}

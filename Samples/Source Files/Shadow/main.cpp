@@ -97,7 +97,7 @@ int main() {
 	shadowMapPass.addDependencies(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 	shadowMapPass.compile();
 
-	shadowMapPass.prepareOutputFrameBuffer(*shadow_map_buffer);
+	shadowMapPass.prepareOutputFrameBuffer(queue, commandBuffer[0], *shadow_map_buffer);
 	//Render Pass
 	RenderPass renderPass = RenderPass();
 	GraphicPipeline* renderPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
@@ -131,7 +131,7 @@ int main() {
 	std::vector<FrameBuffer*> frameBuffers;
 	for (int i = 0; i < nbFrames; i++) {
 		frameBuffers.push_back(new FrameBuffer(s->size().width, s->size().height));
-		renderPass.prepareOutputFrameBuffer(*frameBuffers[i]);
+		renderPass.prepareOutputFrameBuffer(queue, commandBuffer[0], *frameBuffers[i]);
 	}
 
 	bool updateUniformBuffer = true;
@@ -181,7 +181,7 @@ int main() {
 			lastMousePos = nullptr;
 		}
 
-		commandBuffer[f].wait(2000000000);
+		commandBuffer[f].wait();
 		commandBuffer[f].resetFence();
 		commandBuffer[f].beginRecord();
 
@@ -200,10 +200,9 @@ int main() {
 		commandBuffer[f].endRecord();
 		
 
-		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(1) });
+		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(0) });
 
 		
-
 		s->presentImage(presentQueue, image, { commandBuffer[f].getSemaphore(0) });
 
 	}
