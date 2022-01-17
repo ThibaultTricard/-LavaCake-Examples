@@ -30,7 +30,7 @@ int main() {
 	VkExtent2D size = s->size();
 
 	std::vector<CommandBuffer> commandBuffer = std::vector<CommandBuffer>(nbFrames);
-	for (int i = 0; i < nbFrames; i++) {
+	for (uint32_t i = 0; i < nbFrames; i++) {
 		commandBuffer[i].addSemaphore();
 		commandBuffer[i].addSemaphore();
 	}
@@ -129,7 +129,7 @@ int main() {
 
 
 	std::vector<FrameBuffer*> frameBuffers;
-	for (int i = 0; i < nbFrames; i++) {
+	for (uint32_t i = 0; i < nbFrames; i++) {
 		frameBuffers.push_back(new FrameBuffer(s->size().width, s->size().height));
 		renderPass.prepareOutputFrameBuffer(queue, commandBuffer[0], *frameBuffers[i]);
 	}

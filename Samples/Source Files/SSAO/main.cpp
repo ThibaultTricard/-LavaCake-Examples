@@ -118,7 +118,7 @@ int main() {
 	UniformBuffer* SSAOuni = new UniformBuffer();
 
 	std::array<vec4f, 64> samples;
-	srand(time(NULL));
+	srand((int)time(NULL));
 	for (unsigned int i = 0; i < 64; i++)
 	{
 		vec3f noise({
@@ -128,7 +128,7 @@ int main() {
 
 		noise = Normalize(noise) * ((float)rand() / (float)RAND_MAX);
 		
-		float scale = (float)i / 64.0;
+		float scale = (float)i / 64.0f;
 		scale = lerp(0.1f, 1.0f, scale * scale);
 		noise =noise * scale;
 
@@ -136,7 +136,7 @@ int main() {
 	}
 
 	std::array<vec4f, 16> randomVectors;
-	srand(time(NULL));
+	srand((int)time(NULL));
 	for (unsigned int i = 0; i < 16; i++)
 	{
 		vec3f noise({
@@ -288,7 +288,7 @@ int main() {
 
 	vec2d* lastMousePos = nullptr;
 
-	vec2d polars = vec2d({ 0.0,0.0 });
+	vec2f polars = vec2f({ 0.0f,0.0f });
 
 	float red = 1.0, green = 1.0, blue = 1.0;
 	float x = 0, y = 0, z = 0;

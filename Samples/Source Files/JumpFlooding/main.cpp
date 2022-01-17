@@ -37,13 +37,13 @@ int main() {
 
 	//setting up seeds
 	for (int i = 0; i < nseeds; i++) {
-		int x = float(std::rand()) / float(RAND_MAX) * 512;
-		int y = float(std::rand()) / float(RAND_MAX) * 512;
+		int x = (int)(float(std::rand()) / float(RAND_MAX) * 512);
+		int y = (int)(float(std::rand()) / float(RAND_MAX) * 512);
 
-		data[(x + y * 512) * 4] = x;
-		data[(x + y * 512) * 4 + 1] = y;
+		data[(x + y * 512) * 4] = (float)x;
+		data[(x + y * 512) * 4 + 1] = (float)y;
 		data[(x + y * 512) * 4 + 2] = float(i)/ nseeds;
-		data[(x + y * 512) * 4 + 3] = 0.0;
+		data[(x + y * 512) * 4 + 3] = 0.0f;
 	}
 
 	seeds->allocate(queue, *cmbBuff, data, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_FORMAT_R32G32B32A32_SFLOAT);
@@ -147,7 +147,7 @@ int main() {
 		passNumber->setVariable("passNumber", pass + 1);
 		passNumber->update(*cmbBuff);
 		jumpFloodPipeline->compute(*cmbBuff, 512, 512, 1);
-		LavaCake::vkCmdPipelineBarrier(cmbBuff->getHandle(), VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, print_memory_barriers.size(), print_memory_barriers.data(), 0, nullptr);
+		LavaCake::vkCmdPipelineBarrier(cmbBuff->getHandle(), VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, (uint32_t)print_memory_barriers.size(), print_memory_barriers.data(), 0, nullptr);
 		cmbBuff->endRecord();
 		cmbBuff->submit(queue, {}, {});
 		
@@ -170,7 +170,7 @@ int main() {
 
 
 		showPass->draw(*cmbBuff, *frameBuffer, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
-		LavaCake::vkCmdPipelineBarrier(cmbBuff->getHandle(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, seed_memory_barriers.size(), seed_memory_barriers.data(), 0, nullptr);
+		LavaCake::vkCmdPipelineBarrier(cmbBuff->getHandle(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, (uint32_t)seed_memory_barriers.size(), seed_memory_barriers.data(), 0, nullptr);
 
 		cmbBuff->endRecord();
 

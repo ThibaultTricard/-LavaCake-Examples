@@ -33,7 +33,7 @@ int main() {
 
 	CommandBuffer allocBuff;
 
-	for (int i = 0; i < nbFrames; i++) {
+	for (uint32_t i = 0; i < nbFrames; i++) {
 		commandBuffer[i].addSemaphore();
 	}
 
@@ -185,7 +185,7 @@ int main() {
 
 
 	std::vector<FrameBuffer*> frameBuffers;
-	for (int i = 0; i < nbFrames; i++) {
+	for (uint32_t i = 0; i < nbFrames; i++) {
 		frameBuffers.push_back(new FrameBuffer(s->size().width, s->size().height));
 		consolePass.prepareOutputFrameBuffer(queue, commandBuffer[0] ,*frameBuffers[i]);
 	}
