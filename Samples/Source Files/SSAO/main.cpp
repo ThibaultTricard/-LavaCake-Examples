@@ -58,7 +58,7 @@ int main() {
 	b->end();
 
 
-	RenderPass Gpass(VK_FORMAT_R32G32B32A32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
+	RenderPass Gpass(VK_FORMAT_R32G32B32A32_SFLOAT, VK_FORMAT_D32_SFLOAT);
 	GraphicPipeline* Gpipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
 	VertexShaderModule* Gvertex = new  VertexShaderModule(prefix+"Data/Shaders/SSAO/Gbuffer.vert.spv");
