@@ -15,7 +15,7 @@ std::string prefix ="";
 #endif
 
 int main() {
-	uint32_t nbFrames = 4;
+	uint32_t nbFrames = 3;
 	ErrorCheck::PrintError(true);
 	Window w("LavaCake : Shadow", 1000, 800);
 	Mouse* mouse = Mouse::getMouse();
@@ -108,10 +108,10 @@ int main() {
 	renderPipeline->setFragmentModule(renderFrag);
 
 	
-	renderPipeline->addPushContant(constant, VK_SHADER_STAGE_VERTEX_BIT);
+	renderPipeline->setPushContantInfo({ { constant->size() ,VK_SHADER_STAGE_VERTEX_BIT } });
 
 	renderPipeline->setVerticesInfo(scene_vertex_buffer->getBindingDescriptions(), scene_vertex_buffer->getAttributeDescriptions(), scene_vertex_buffer->primitiveTopology());
-	renderPipeline->setVertices({ scene_vertex_buffer });
+	renderPipeline->setVertices({ { scene_vertex_buffer, {{constant, VK_SHADER_STAGE_VERTEX_BIT} }} });
 	renderPipeline->addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
 
 	renderPipeline->addFrameBuffer(shadow_map_buffer, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
@@ -142,19 +142,6 @@ int main() {
 	vec2d polars = vec2d({ 0.0,0.0 });
 	while (w.running()) {
 
-		
-		
-		VkSwapchainKHR& swapchain = s->getHandle();
-		VkExtent2D size = s->size();
-		SwapChainImage& image = s->acquireImage();
-
-		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
-		wait_semaphore_infos.push_back({
-			image.getSemaphore(),                     // VkSemaphore            Semaphore
-			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
-			});
-
-
 		w.updateInput();
 		f++;
 		f = f % nbFrames;
@@ -184,6 +171,16 @@ int main() {
 		commandBuffer[f].wait();
 		commandBuffer[f].resetFence();
 		commandBuffer[f].beginRecord();
+
+		VkSwapchainKHR& swapchain = s->getHandle();
+		VkExtent2D size = s->size();
+		SwapChainImage& image = s->acquireImage();
+
+		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
+		wait_semaphore_infos.push_back({
+			image.getSemaphore(),                     // VkSemaphore            Semaphore
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
+			});
 
 
 		if (updateUniformBuffer) {

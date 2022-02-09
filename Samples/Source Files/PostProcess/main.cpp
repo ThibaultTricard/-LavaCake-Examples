@@ -112,10 +112,11 @@ int main() {
 
 	sphereRenderPipeline->setVerticesInfo(sphere_vertex_buffer->getBindingDescriptions(), sphere_vertex_buffer->getAttributeDescriptions(), sphere_vertex_buffer->primitiveTopology());
 
-	sphereRenderPipeline->setVertices({ sphere_vertex_buffer });
+	sphereRenderPipeline->setPushContantInfo({ { cameraConstant->size() ,VK_SHADER_STAGE_FRAGMENT_BIT } });
+
+	sphereRenderPipeline->setVertices({ { sphere_vertex_buffer , {{cameraConstant,VK_SHADER_STAGE_FRAGMENT_BIT}} } });
 	sphereRenderPipeline->addUniformBuffer(uniforms, VK_SHADER_STAGE_VERTEX_BIT, 0);
 	sphereRenderPipeline->addTextureBuffer(skyCubeMap, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
-	sphereRenderPipeline->addPushContant(cameraConstant, VK_SHADER_STAGE_FRAGMENT_BIT);
 
 
 	GraphicPipeline* skyRenderPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
@@ -147,13 +148,11 @@ int main() {
 	FragmentShaderModule* postProcessFrag = new FragmentShaderModule(prefix+"Data/Shaders/PostProcess/postprocess.frag.spv");
 	postProcessPipeline->setFragmentModule(postProcessFrag);
 
-	postProcessPipeline->addPushContant(timeConstant, VK_SHADER_STAGE_FRAGMENT_BIT);
+	postProcessPipeline->setPushContantInfo({ { timeConstant->size() ,VK_SHADER_STAGE_FRAGMENT_BIT } });
 	
 	postProcessPipeline->setVerticesInfo(quad_vertex_buffer->getBindingDescriptions(), quad_vertex_buffer->getAttributeDescriptions(), quad_vertex_buffer->primitiveTopology());
 
-	postProcessPipeline->setVertices({ quad_vertex_buffer });
-	
-
+	postProcessPipeline->setVertices({ { quad_vertex_buffer, {{timeConstant,VK_SHADER_STAGE_FRAGMENT_BIT}} } });
 	
 	postProcessPipeline->addAttachment(colorAttachemnt, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 
@@ -216,12 +215,7 @@ int main() {
 		VkSwapchainKHR& swapchain = s->getHandle();
 		VkExtent2D size = s->size();
 
-		SwapChainImage& image = s->acquireImage();
-		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
-		wait_semaphore_infos.push_back({
-			image.getSemaphore(),																	// VkSemaphore            Semaphore
-			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
-			});
+		
 
 		time +=0.001f;
 		timeConstant->setVariable("Time",  time);
@@ -254,7 +248,12 @@ int main() {
 		commandBuffer[f].resetFence();
 		commandBuffer[f].beginRecord();
 
-
+		SwapChainImage& image = s->acquireImage();
+		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
+		wait_semaphore_infos.push_back({
+			image.getSemaphore(),																	// VkSemaphore            Semaphore
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
+			});
 		
 
 

@@ -74,10 +74,11 @@ int main() {
 
 	pipeline->setVerticesInfo(v->getBindingDescriptions(), v->getAttributeDescriptions(), v->primitiveTopology());
 
-	pipeline->setVertices({ v });
+	pipeline->setVertices({ { v, { {constant,VK_SHADER_STAGE_FRAGMENT_BIT} } } });
 	pipeline->addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
 	pipeline->addTextureBuffer(normalMap, VK_SHADER_STAGE_FRAGMENT_BIT,1);
-	pipeline->addPushContant(constant, VK_SHADER_STAGE_FRAGMENT_BIT);
+	pipeline->setPushContantInfo({ {constant->size(), VK_SHADER_STAGE_FRAGMENT_BIT} });
+	//pipeline->addPushContant(constant, VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	SubpassAttachment SA;
 	SA.showOnScreen = true;

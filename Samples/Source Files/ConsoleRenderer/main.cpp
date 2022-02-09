@@ -135,10 +135,9 @@ int main() {
 	FragmentShaderModule* renderFrag = new FragmentShaderModule(prefix+"Data/Shaders/ConsoleRenderer/scene.frag.spv");
 	renderPipeline->setFragmentModule(renderFrag);
 
-	
-	renderPipeline->addPushContant(constant, VK_SHADER_STAGE_VERTEX_BIT);
+	renderPipeline->setPushContantInfo({ { constant->size() ,VK_SHADER_STAGE_VERTEX_BIT } });
 	renderPipeline->setVerticesInfo(scene_vertex_buffer->getBindingDescriptions(), scene_vertex_buffer->getAttributeDescriptions(), scene_vertex_buffer->primitiveTopology());
-	renderPipeline->setVertices({ scene_vertex_buffer });
+	renderPipeline->setVertices({ { scene_vertex_buffer, {{constant, VK_SHADER_STAGE_VERTEX_BIT} }} });
 	renderPipeline->addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
 
 	renderPipeline->addFrameBuffer(shadow_map_buffer, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
