@@ -1,4 +1,6 @@
+#define LAVACAKE_WINDOW_MANAGER_GLFW
 #include "Framework/Framework.h"
+
 
 using namespace LavaCake;
 using namespace LavaCake::Geometry;
@@ -21,8 +23,6 @@ RenderPass* createRenderPass(Queue * queue, CommandBuffer& commandBuffer) {
 	//We define the stride format we need for the mesh here 
 	//each vertex is a 3D position followed by a RGB color
 	
-
-
 
 	VertexShaderModule* vertexShader = new VertexShaderModule(prefix + "Data/Shaders/helloworld/shader.vert.spv");
 	FragmentShaderModule* fragmentShader = new FragmentShaderModule(prefix + "Data/Shaders/helloworld/shader.frag.spv");
@@ -52,7 +52,6 @@ RenderPass* createRenderPass(Queue * queue, CommandBuffer& commandBuffer) {
 }
 
 bool g_resize = false;
-
 void window_size_callback(GLFWwindow* window, int width, int height)
 {
 	g_resize = true;
@@ -62,14 +61,21 @@ void window_size_callback(GLFWwindow* window, int width, int height)
 
 int main() {
 
-	Window w("LavaCake HelloWorld", 512, 512);
-	ErrorCheck::PrintError(true);
+	glfwInit();
+
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+	GLFWwindow* window = glfwCreateWindow(512, 512, "LavaCake HelloWorld", nullptr, nullptr);
+
+	ErrorCheck::PrintError(true, 5);
 
 
-	glfwSetWindowSizeCallback(w.m_window, window_size_callback);
+	glfwSetWindowSizeCallback(window, window_size_callback);
 	
+	GLFWSurfaceInitialisator surfaceInitialisator(window);
+
 	Device* d = Device::getDevice();
-	d->initDevices(0, 1, w.m_windowParams);
+	d->initDevices(0, 1, surfaceInitialisator);
 	SwapChain* s = SwapChain::getSwapChain();
 	s->init();
 
@@ -107,8 +113,8 @@ int main() {
 	FrameBuffer* frameBuffers = new FrameBuffer(size.width, size.height);
 	pass->prepareOutputFrameBuffer(queue, commandBuffer, *frameBuffers);
 
-	while (w.running()) {
-		w.updateInput();
+	while (!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
 	
 		VkDevice logical = d->getLogicalDevice();
 		VkSwapchainKHR& swapchain = s->getHandle();

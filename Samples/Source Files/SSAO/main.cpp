@@ -1,3 +1,4 @@
+#define LAVACAKE_WINDOW_MANAGER_GLFW
 #include "Framework/Framework.h"
 #include "AllHeaders.h"
 #include "Common.h"
@@ -21,12 +22,18 @@ float lerp(float a, float b, float f)
 
 int main() {
 
+	glfwInit();
 
-	Window w("LavaCake : SSAO", 1280, 720);
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+	GLFWwindow* window = glfwCreateWindow(1280, 720, "Lavacake: SSAO", nullptr, nullptr);
+
+	GLFWSurfaceInitialisator surfaceInitialisator(window);
+
 	//glfwSetWindowPos(w.m_window, 2000, 100);
-	Mouse* mouse = Mouse::getMouse();
+	
 	Device* d = Device::getDevice();
-	d->initDevices(0, 1, w.m_windowParams);
+	d->initDevices(0, 1, surfaceInitialisator);
 	SwapChain* s = SwapChain::getSwapChain();
 	s->init();
 	Queue* graphicQueue = d->getGraphicQueue(0);
@@ -35,7 +42,8 @@ int main() {
 	VkExtent2D size = s->size();
 
 	ImGuiWrapper* gui = new ImGuiWrapper();
-	gui->initGui(&w, d->getGraphicQueue(0), &cmdBuf);
+	gui->initGui(d->getGraphicQueue(0), cmdBuf, vec2i({ 1280,720 }), vec2i({ (int)size.width, (int)size.height }));
+	prepareInputs(window);
 	auto knight = Load3DModelFromObjFile(prefix+"Data/Models/StrollingKnight.obj", true, true);
 	Mesh_t* knightMesh = new IndexedMesh<TRIANGLE>(knight.first.first, knight.first.second, knight.second);
 
@@ -293,8 +301,8 @@ int main() {
 	float red = 1.0, green = 1.0, blue = 1.0;
 	float x = 0, y = 0, z = 0;
 
-	while (w.running()) {
-		w.updateInput();
+	while (!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
 
 		VkDevice logical = d->getLogicalDevice();
 		auto presentQueue = d->getPresentQueue();
@@ -309,7 +317,7 @@ int main() {
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
 			});
 
-		if (mouse->leftButton) {
+		/*if (mouse->leftButton) {
 			if (lastMousePos == nullptr) {
 				lastMousePos = new vec2d({ mouse->position[0], mouse->position[1] });
 			}
@@ -329,7 +337,7 @@ int main() {
 		}
 		else {
 			lastMousePos = nullptr;
-		}
+		}*/
 
 		cmdBuf.wait(UINT32_MAX);
 		cmdBuf.resetFence();

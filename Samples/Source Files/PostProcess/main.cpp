@@ -1,3 +1,4 @@
+#define LAVACAKE_WINDOW_MANAGER_GLFW
 #include "Framework/Framework.h"
 #include "AllHeaders.h"
 #include "Common.h"
@@ -17,10 +18,18 @@ using namespace LavaCake::Core;
 int main() {
 	int nbFrames = 3;
 	ErrorCheck::PrintError(true);
-	Window w("LavaCake : Post Process", 1000, 800);
-	Mouse* mouse = Mouse::getMouse();
+
+
+	glfwInit();
+
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+	GLFWwindow* window = glfwCreateWindow(512, 512, "Lavacake: Post Process", nullptr, nullptr);
+
+	GLFWSurfaceInitialisator surfaceInitialisator(window);
+
 	Device* d = Device::getDevice();
-	d->initDevices(0, 1, w.m_windowParams);
+	d->initDevices(0, 1, surfaceInitialisator);
 	SwapChain* s = SwapChain::getSwapChain();
 	s->init();
 	VkExtent2D size = s->size();
@@ -206,8 +215,8 @@ int main() {
 	vec2d* lastMousePos = nullptr;
 
 	vec2d polars = vec2d({ 0.0,0.0 });
-	while (w.running()) {
-		w.updateInput();
+	while (!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
 		f++;
 		f = f % nbFrames;
 
@@ -220,7 +229,7 @@ int main() {
 		time +=0.001f;
 		timeConstant->setVariable("Time",  time);
 
-		if (mouse->leftButton) {
+		/*if (mouse->leftButton) {
 			if (lastMousePos == nullptr) {
 				lastMousePos = new vec2d({ mouse->position[0], mouse->position[1] });
 			}
@@ -240,7 +249,7 @@ int main() {
 		}
 		else {
 			lastMousePos = nullptr;
-		}
+		}*/
 
 
 
@@ -255,17 +264,10 @@ int main() {
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
 			});
 		
-
-
 		if (updateUniformBuffer) {
 			uniforms->update(commandBuffer[f]);
 			updateUniformBuffer = false;
 		}
-
-
-
-		
-
 
 		
 		renderPass.setSwapChainImage(*frameBuffers[f], image);
@@ -282,6 +284,6 @@ int main() {
 		s->presentImage(presentQueue, image, { commandBuffer[f].getSemaphore(0) });
 	}
 
-	d->end();
+	d->waitForAllCommands();
 }
 
