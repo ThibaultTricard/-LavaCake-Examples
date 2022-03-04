@@ -1,3 +1,4 @@
+#define LAVACAKE_WINDOW_MANAGER_GLFW
 #include "Framework/Framework.h"
 
 using namespace LavaCake;
@@ -13,9 +14,16 @@ std::string prefix ="";
 
 int main() {
 
-	Window w("Lavacake: JumpFlooding", 512, 512);
+	glfwInit();
+
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+	GLFWwindow* window = glfwCreateWindow(512, 512, "Lavacake: JumpFlooding", nullptr, nullptr);
+
+	GLFWSurfaceInitialisator surfaceInitialisator(window);
+
 	Device* d = Device::getDevice();
-	d->initDevices(1, 1, w.m_windowParams);
+	d->initDevices(1, 1, surfaceInitialisator);
 	SwapChain* s = SwapChain::getSwapChain();
 	s->init();
 	Queue* queue = d->getGraphicQueue(0);
@@ -137,8 +145,8 @@ int main() {
 		});
 
 	int pass = 0;
-	while (w.running()) {
-		w.updateInput();
+	while (!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
 		if (pass != 0) {
 			cmbBuff->wait(2000000000);
 		}
@@ -182,7 +190,7 @@ int main() {
 		Sleep(500);
 #endif
 	}
-	d->end();
+	d->waitForAllCommands();
 	delete cmbBuff;
 	delete jumpFloodPipeline;
 	delete compute;

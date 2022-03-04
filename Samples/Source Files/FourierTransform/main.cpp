@@ -1,3 +1,4 @@
+#define LAVACAKE_WINDOW_MANAGER_GLFW
 #include "Framework/Framework.h"
 
 
@@ -15,11 +16,17 @@ std::string prefix ="";
 int main() {
 	ErrorCheck::PrintError(true, 2);
 	int nbFrames = 3;
-	Framework::ErrorCheck::PrintError(true);
-	Framework::Window w("LavaCake : Fourier Transform", 512, 512);
+
+	glfwInit();
+
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+	GLFWwindow* window = glfwCreateWindow(512, 512, "Fourier Transform", nullptr, nullptr);
+
+	GLFWSurfaceInitialisator surfaceInitialisator(window);
 
 	Framework::Device* d = Framework::Device::getDevice();
-	d->initDevices(1, 1, w.m_windowParams);
+	d->initDevices(1, 1, surfaceInitialisator);
 	LavaCake::Framework::SwapChain* s = LavaCake::Framework::SwapChain::getSwapChain();
 	s->init();
 
@@ -57,7 +64,7 @@ int main() {
 	quad_vertex_buffer->allocate(queue, commandBuffer[0]);
 
 	//texture map
-	Framework::Image* input = createTextureBuffer(queue, commandBuffer[0], prefix+"Data/Textures/mandrill.png", 4);
+	Framework::Image* input = createTextureBuffer(queue, commandBuffer[0], prefix+"Data/Textures/auxetic_x5.jpg", 4);
 
 
 	Framework::Buffer* output_pass1 = new Framework::Buffer();
@@ -150,8 +157,8 @@ int main() {
 
 
 	int f = 0;
-	while (w.running()) {
-		w.updateInput();
+	while (!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
 		f++;
 		f = f % nbFrames;
 
@@ -183,7 +190,7 @@ int main() {
 		s->presentImage(presentQueue, image, { commandBuffer[f].getSemaphore(0) });
 	}
 
-	d->end();
+	d->waitForAllCommands();
 
 
   return 0;

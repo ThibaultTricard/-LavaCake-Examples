@@ -1,3 +1,4 @@
+#define LAVACAKE_WINDOW_MANAGER_GLFW
 #include "Framework/Framework.h"
 
 using namespace LavaCake;
@@ -13,7 +14,13 @@ std::string prefix ="";
 
 int main() {
 
-	Window w("LavaCake HelloWorld & Imgui", 1200, 800);
+	glfwInit();
+
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+	GLFWwindow* window = glfwCreateWindow(512, 512, "LavaCake imgui", nullptr, nullptr);
+
+	GLFWSurfaceInitialisator surfaceInitialisator(window);
 
 	ImGuiWrapper* gui = new ImGuiWrapper();
 
@@ -21,7 +28,7 @@ int main() {
 
 	int nbFrames = 1;
 	LavaCake::Framework::Device* d = LavaCake::Framework::Device::getDevice();
-	d->initDevices(0, 1, w.m_windowParams);
+	d->initDevices(0, 1, surfaceInitialisator);
 	LavaCake::Framework::SwapChain* s = LavaCake::Framework::SwapChain::getSwapChain();
 	s->init(); 
 	VkExtent2D size = s->size();
@@ -32,8 +39,8 @@ int main() {
 		commandBuffer[i].addSemaphore();
 	}
 
-	gui->initGui(&w,d->getGraphicQueue(0), &commandBuffer[0]);
-
+	gui->initGui(d->getGraphicQueue(0), commandBuffer[0], vec2i({ 512 ,512 }), vec2i({(int)size.width ,(int)size.height}) );
+	prepareInputs(window);
 
 	Mesh_t* triangle = new Mesh<TRIANGLE>(LavaCake::Geometry::PC3);
 	triangle->appendVertex({ -0.75f, 0.75f , 0.0f, 1.0f	, 0.0f	, 0.0f });
@@ -78,8 +85,8 @@ int main() {
 	}
 
 	int f = 0;
-	while (w.running()) {
-		w.updateInput();
+	while (!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
 		f++;
 		f = f % nbFrames;
 		commandBuffer[f].wait(2000000000);
@@ -98,8 +105,8 @@ int main() {
 			// Setup display size (every frame to accommodate for window resizing)
 			int width, height;
 			int display_w, display_h;
-			glfwGetWindowSize(w.m_window, &width, &height);
-			glfwGetFramebufferSize(w.m_window, &display_w, &display_h);
+			glfwGetWindowSize(window, &width, &height);
+			glfwGetFramebufferSize(window, &display_w, &display_h);
 			io.DisplaySize = ImVec2((float)width, (float)height);
 			if (width > 0 && height > 0)
 				io.DisplayFramebufferScale = ImVec2((float)display_w / width, (float)display_h / height);

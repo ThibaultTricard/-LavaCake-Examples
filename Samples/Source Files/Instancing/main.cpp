@@ -1,3 +1,4 @@
+#define LAVACAKE_WINDOW_MANAGER_GLFW
 #include "Framework/Framework.h"
 
 using namespace LavaCake;
@@ -63,14 +64,20 @@ void window_size_callback(GLFWwindow* window, int width, int height)
 
 int main() {
 
-	Window w("Instancing", 512, 512);
+
+	glfwInit();
+
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+	GLFWwindow* window = glfwCreateWindow(512, 512, "Lavacake: Instancing", nullptr, nullptr);
+
 	ErrorCheck::PrintError(true);
+	GLFWSurfaceInitialisator surfaceInitialisator(window);
 
-
-	glfwSetWindowSizeCallback(w.m_window, window_size_callback);
+	glfwSetWindowSizeCallback(window, window_size_callback);
 	
 	Device* d = Device::getDevice();
-	d->initDevices(0, 1, w.m_windowParams);
+	d->initDevices(0, 1, surfaceInitialisator);
 	SwapChain* s = SwapChain::getSwapChain();
 	s->init();
 
@@ -126,8 +133,8 @@ int main() {
 		{ triangle_vertex_buffer, {{constants[2],VK_SHADER_STAGE_VERTEX_BIT}} }
 	});
 
-	while (w.running()) {
-		w.updateInput();
+	while (!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
 	
 		VkDevice logical = d->getLogicalDevice();
 		VkSwapchainKHR& swapchain = s->getHandle();
@@ -176,5 +183,5 @@ int main() {
 
 		s->presentImage(presentQueue, image, { commandBuffer.getSemaphore(0) });
 	}
-	d->end();
+	d->waitForAllCommands();
 }

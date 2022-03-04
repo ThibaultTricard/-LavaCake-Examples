@@ -1,3 +1,4 @@
+#define LAVACAKE_WINDOW_MANAGER_GLFW
 #include "Framework/Framework.h"
 #include "Geometry/meshLoader.h"
 
@@ -16,12 +17,18 @@ int main() {
 	uint32_t nbFrames = 1;
 	ErrorCheck::PrintError(true);
 
-	Window w("LavaCake HelloWorld", 512, 512);
 
-	Mouse* mouse = Mouse::getMouse();
+	glfwInit();
+
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+	GLFWwindow* window = glfwCreateWindow(512, 512, "Console renderer", nullptr, nullptr);
+
+	GLFWSurfaceInitialisator surfaceInitialisator(window);
+
 
 	Device* d = Device::getDevice();
-	d->initDevices(0, 1, w.m_windowParams);
+	d->initDevices(0, 1, surfaceInitialisator);
 	SwapChain* s = SwapChain::getSwapChain();
 	s->init();
 
@@ -196,8 +203,8 @@ int main() {
 	vec2d* lastMousePos = nullptr;
 
 	vec2d polars = vec2d({ 0.0,0.0 });
-	while (w.running()){
-		w.updateInput();
+	while (!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
 		f++;
 		f = f % nbFrames;
 		
@@ -213,14 +220,14 @@ int main() {
 			});
 
 		
-		int state = glfwGetKey(w.m_window, GLFW_KEY_SPACE);
+		int state = glfwGetKey(window, GLFW_KEY_SPACE);
     if (state == GLFW_PRESS) {
 			d->waitForAllCommands();
 			consolePass.reloadShaders();
 		}
 
 
-		if (mouse->leftButton) {
+		/*if (mouse->leftButton) {
 			if (lastMousePos == nullptr) {
 				lastMousePos = new vec2d({ mouse->position[0], mouse->position[1] });
 			}
@@ -240,7 +247,7 @@ int main() {
 		}
 		else {
 			lastMousePos = nullptr;
-		}
+		}*/
 
 		commandBuffer[f].wait(UINT32_MAX);
 		commandBuffer[f].resetFence();
@@ -268,6 +275,6 @@ int main() {
 		
 
 	}
-	d->end();
+	d->waitForAllCommands();
 }
 
