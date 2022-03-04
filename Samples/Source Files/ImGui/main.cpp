@@ -22,7 +22,7 @@ int main() {
 
 	GLFWSurfaceInitialisator surfaceInitialisator(window);
 
-	ImGuiWrapper* gui = new ImGuiWrapper();
+	ErrorCheck::printError(true, 8);
 
 	int  debug = 0;
 
@@ -32,14 +32,14 @@ int main() {
 	LavaCake::Framework::SwapChain* s = LavaCake::Framework::SwapChain::getSwapChain();
 	s->init(); 
 	VkExtent2D size = s->size();
-	Queue* queue = d->getGraphicQueue(0);
-	PresentationQueue* presentQueue = d->getPresentQueue();
+	GraphicQueue queue = d->getGraphicQueue(0);
+	PresentationQueue presentQueue = d->getPresentQueue();
 	std::vector<CommandBuffer> commandBuffer = std::vector<CommandBuffer>(nbFrames);
 	for (int i = 0; i < nbFrames; i++) {
 		commandBuffer[i].addSemaphore();
 	}
+	ImGuiWrapper* gui = new ImGuiWrapper(d->getGraphicQueue(0), commandBuffer[0], vec2i({ 512 ,512 }), vec2i({ (int)size.width ,(int)size.height }));
 
-	gui->initGui(d->getGraphicQueue(0), commandBuffer[0], vec2i({ 512 ,512 }), vec2i({(int)size.width ,(int)size.height}) );
 	prepareInputs(window);
 
 	Mesh_t* triangle = new Mesh<TRIANGLE>(LavaCake::Geometry::PC3);
@@ -53,7 +53,7 @@ int main() {
 	RenderPass* pass = new RenderPass();
 	GraphicPipeline* pipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
-    VertexShaderModule* vertexShader = new VertexShaderModule(prefix+"Data/Shaders/helloworld/shader.vert.spv");
+  VertexShaderModule* vertexShader = new VertexShaderModule(prefix+"Data/Shaders/helloworld/shader.vert.spv");
 	FragmentShaderModule* fragmentShader = new FragmentShaderModule(prefix+"Data/Shaders/helloworld/shader.frag.spv");
 
 
@@ -72,7 +72,7 @@ int main() {
 	SA.useDepth = true;
 	SA.showOnScreenIndex = 0;
 
-	pass->addSubPass({ pipeline, gui->getPipeline() }, SA);
+	pass->addSubPass({ pipeline, gui->getPipeline().get()}, SA);
 	pass->addDependencies(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 	pass->addDependencies(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 

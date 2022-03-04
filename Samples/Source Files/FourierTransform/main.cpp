@@ -14,8 +14,8 @@ std::string prefix ="";
 #endif
 
 int main() {
-	ErrorCheck::PrintError(true, 2);
-	int nbFrames = 3;
+	ErrorCheck::printError(true, 2);
+	int nbFrames = 2;
 
 	glfwInit();
 
@@ -30,10 +30,10 @@ int main() {
 	LavaCake::Framework::SwapChain* s = LavaCake::Framework::SwapChain::getSwapChain();
 	s->init();
 
-	Queue* queue = d->getGraphicQueue(0);
-	PresentationQueue* presentQueue = d->getPresentQueue();
+	GraphicQueue queue = d->getGraphicQueue(0);
+	PresentationQueue presentQueue = d->getPresentQueue();
 
-	Queue* compute_queue = d->getComputeQueue(0);
+	ComputeQueue compute_queue = d->getComputeQueue(0);
 
 	VkDevice logical = d->getLogicalDevice();
 	VkExtent2D size = s->size();
@@ -64,19 +64,19 @@ int main() {
 	quad_vertex_buffer->allocate(queue, commandBuffer[0]);
 
 	//texture map
-	Framework::Image* input = createTextureBuffer(queue, commandBuffer[0], prefix+"Data/Textures/auxetic_x5.jpg", 4);
+	Framework::Image input = createTextureBuffer(queue, commandBuffer[0], prefix+"Data/Textures/auxetic_x5.jpg", 4);
 
 
 	Framework::Buffer* output_pass1 = new Framework::Buffer();
-	std::vector<float> rawdata = std::vector<float>(input->width() * input->height() * uint32_t(2));
+	std::vector<float> rawdata = std::vector<float>(input.width() * input.height() * uint32_t(2));
 	output_pass1->allocate(queue, commandBuffer[0],rawdata, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT);
 
 	Framework::Buffer* output_pass2 = new Framework::Buffer();
 	output_pass2->allocate(queue, commandBuffer[0], rawdata, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT);
 
 	Framework::UniformBuffer* sizeBuffer = new Framework::UniformBuffer();
-	sizeBuffer->addVariable("width", input->width());
-	sizeBuffer->addVariable("height", input->height());
+	sizeBuffer->addVariable("width", input.width());
+	sizeBuffer->addVariable("height", input.height());
 	sizeBuffer->end();
 
 	//pass1 
@@ -85,7 +85,7 @@ int main() {
 	Framework::ComputeShaderModule* computeFourier1 = new Framework::ComputeShaderModule(prefix+"Data/Shaders/FourierTransform/fourier_pass1.comp.spv");
 	computePipeline1->setComputeModule(computeFourier1);
 
-	computePipeline1->addTextureBuffer(input, VK_SHADER_STAGE_COMPUTE_BIT, 0);
+	computePipeline1->addTextureBuffer(&input, VK_SHADER_STAGE_COMPUTE_BIT, 0);
 	computePipeline1->addTexelBuffer(output_pass1, VK_SHADER_STAGE_COMPUTE_BIT, 1);
 	computePipeline1->addUniformBuffer(sizeBuffer, VK_SHADER_STAGE_COMPUTE_BIT, 2);
 
@@ -143,10 +143,10 @@ int main() {
 
 	sizeBuffer->update(commandBuffer[0]);
 
-	computePipeline1->compute(commandBuffer[0], input->width(), input->height(), 1);
+	computePipeline1->compute(commandBuffer[0], input.width(), input.height(), 1);
 
 	
-	computePipeline2->compute(commandBuffer[0], input->width(), input->height(), 1);
+	computePipeline2->compute(commandBuffer[0], input.width(), input.height(), 1);
 
 
 	commandBuffer[0].endRecord();

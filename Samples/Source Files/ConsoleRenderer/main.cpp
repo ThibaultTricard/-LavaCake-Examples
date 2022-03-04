@@ -15,7 +15,7 @@ std::string prefix ="";
 
 int main() {
 	uint32_t nbFrames = 1;
-	ErrorCheck::PrintError(true);
+	ErrorCheck::printError(true);
 
 
 	glfwInit();
@@ -32,8 +32,8 @@ int main() {
 	SwapChain* s = SwapChain::getSwapChain();
 	s->init();
 
-	Queue* queue = d->getGraphicQueue(0);
-	PresentationQueue* present_queue = d->getPresentQueue();
+	GraphicQueue queue = d->getGraphicQueue(0);
+	PresentationQueue present_queue = d->getPresentQueue();
 	std::vector<CommandBuffer> commandBuffer = std::vector<CommandBuffer>(nbFrames);
 	VkExtent2D size = s->size();
 

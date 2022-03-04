@@ -14,20 +14,20 @@ std::string prefix ="../";
 std::string prefix ="";
 #endif
 
-GraphicPipeline* pipeline;
+std::shared_ptr < GraphicPipeline > pipeline;
 VertexBuffer* triangle_vertex_buffer;
 
-RenderPass* createRenderPass(Queue * queue, CommandBuffer& commandBuffer) {
+RenderPass* createRenderPass(const Queue& queue, CommandBuffer& commandBuffer) {
 	SwapChain* s = SwapChain::getSwapChain();
 	VkExtent2D size = s->size();
 	//We define the stride format we need for the mesh here 
 	//each vertex is a 3D position followed by a RGB color
 	
 
-	VertexShaderModule* vertexShader = new VertexShaderModule(prefix + "Data/Shaders/helloworld/shader.vert.spv");
-	FragmentShaderModule* fragmentShader = new FragmentShaderModule(prefix + "Data/Shaders/helloworld/shader.frag.spv");
+	std::shared_ptr < VertexShaderModule> vertexShader = std::make_shared< VertexShaderModule >(prefix + "Data/Shaders/helloworld/shader.vert.spv");
+	std::shared_ptr < FragmentShaderModule >  fragmentShader = std::make_shared < FragmentShaderModule >(prefix + "Data/Shaders/helloworld/shader.frag.spv");
 
-	pipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
+	pipeline = std::make_shared<GraphicPipeline>(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 	pipeline->setVertexModule(vertexShader);
 	pipeline->setFragmentModule(fragmentShader);
 	pipeline->setVerticesInfo(triangle_vertex_buffer->getBindingDescriptions(), triangle_vertex_buffer->getAttributeDescriptions() ,triangle_vertex_buffer->primitiveTopology());
@@ -67,7 +67,7 @@ int main() {
 
 	GLFWwindow* window = glfwCreateWindow(512, 512, "LavaCake HelloWorld", nullptr, nullptr);
 
-	ErrorCheck::PrintError(true, 5);
+	ErrorCheck::printError(true, 5);
 
 
 	glfwSetWindowSizeCallback(window, window_size_callback);
@@ -80,8 +80,8 @@ int main() {
 	s->init();
 
 	VkExtent2D size = s->size();
-	Queue* queue = d->getGraphicQueue(0);
-	PresentationQueue* presentQueue = d->getPresentQueue();
+	GraphicQueue queue = d->getGraphicQueue(0);
+	PresentationQueue presentQueue = d->getPresentQueue();
 	CommandBuffer  commandBuffer;
 	commandBuffer.addSemaphore();
 
@@ -104,9 +104,7 @@ int main() {
 
 
 	//creating an allocating a vertex buffer
-	triangle_vertex_buffer = new VertexBuffer({ triangle });
-	triangle_vertex_buffer->allocate(queue, commandBuffer);
-
+	triangle_vertex_buffer = new VertexBuffer(queue, commandBuffer, { triangle });
 
 	auto pass = createRenderPass(queue, commandBuffer);
 	
@@ -159,5 +157,5 @@ int main() {
 
 		s->presentImage(presentQueue, image, { commandBuffer.getSemaphore(0) });
 	}
-	d->end();
+	d->waitForAllCommands();
 }

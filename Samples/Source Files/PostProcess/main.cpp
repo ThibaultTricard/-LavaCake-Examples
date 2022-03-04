@@ -17,7 +17,7 @@ using namespace LavaCake::Core;
 
 int main() {
 	int nbFrames = 3;
-	ErrorCheck::PrintError(true);
+	ErrorCheck::printError(true);
 
 
 	glfwInit();
@@ -33,8 +33,8 @@ int main() {
 	SwapChain* s = SwapChain::getSwapChain();
 	s->init();
 	VkExtent2D size = s->size();
-	Queue* queue = d->getGraphicQueue(0);
-	auto presentQueue = d->getPresentQueue();
+	GraphicQueue queue = d->getGraphicQueue(0);
+	PresentationQueue presentQueue = d->getPresentQueue();
 	std::vector<CommandBuffer> commandBuffer = std::vector<CommandBuffer>(nbFrames);
 	for (int i = 0; i < nbFrames; i++) {
 		commandBuffer[i].addSemaphore();
@@ -89,7 +89,7 @@ int main() {
 	uniforms->end();
 
 	//SkyBox texture
-	Image* skyCubeMap = createCubeMap(queue, commandBuffer[0],prefix+"Data/Textures/Skansen/", 4);
+	Image skyCubeMap = createCubeMap(queue, commandBuffer[0],prefix+"Data/Textures/Skansen/", 4);
 
 
 
@@ -105,7 +105,7 @@ int main() {
 	cameraConstant->addVariable("camera", camera);
 
 	//Color Attachment
-	Image* colorAttachemnt = createAttachment(queue, commandBuffer[0], size.width, size.height, s->imageFormat(), attachmentType::COLOR_ATTACHMENT);
+	Image colorAttachemnt = createAttachment(queue, commandBuffer[0], size.width, size.height, s->imageFormat(), attachmentType::COLOR_ATTACHMENT);
 	
 
 	//Render Pass
@@ -125,7 +125,7 @@ int main() {
 
 	sphereRenderPipeline->setVertices({ { sphere_vertex_buffer , {{cameraConstant,VK_SHADER_STAGE_FRAGMENT_BIT}} } });
 	sphereRenderPipeline->addUniformBuffer(uniforms, VK_SHADER_STAGE_VERTEX_BIT, 0);
-	sphereRenderPipeline->addTextureBuffer(skyCubeMap, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
+	sphereRenderPipeline->addTextureBuffer(&skyCubeMap, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 
 
 	GraphicPipeline* skyRenderPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
@@ -140,8 +140,8 @@ int main() {
 
 	skyRenderPipeline->setVertices({ sky_vertex_buffer });
 	skyRenderPipeline->addUniformBuffer(uniforms, VK_SHADER_STAGE_VERTEX_BIT, 0);
-	skyRenderPipeline->addTextureBuffer(skyCubeMap, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
-	skyRenderPipeline->SetCullMode(VK_CULL_MODE_FRONT_BIT);
+	skyRenderPipeline->addTextureBuffer(&skyCubeMap, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
+	skyRenderPipeline->setCullMode(VK_CULL_MODE_FRONT_BIT);
 
 	SubpassAttachment SA;
 	SA.nbColor = 1;
@@ -163,7 +163,7 @@ int main() {
 
 	postProcessPipeline->setVertices({ { quad_vertex_buffer, {{timeConstant,VK_SHADER_STAGE_FRAGMENT_BIT}} } });
 	
-	postProcessPipeline->addAttachment(colorAttachemnt, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
+	postProcessPipeline->addAttachment(&colorAttachemnt, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 
 
 	SA = SubpassAttachment();

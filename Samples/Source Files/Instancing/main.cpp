@@ -17,7 +17,7 @@ GraphicPipeline* pipeline;
 VertexBuffer* triangle_vertex_buffer;
 std::vector<PushConstant* > constants(3);
 
-RenderPass* createRenderPass(Queue * queue, CommandBuffer& commandBuffer) {
+RenderPass* createRenderPass(const Queue& queue, CommandBuffer& commandBuffer) {
 	SwapChain* s = SwapChain::getSwapChain();
 	VkExtent2D size = s->size();
 	//We define the stride format we need for the mesh here 
@@ -71,7 +71,7 @@ int main() {
 
 	GLFWwindow* window = glfwCreateWindow(512, 512, "Lavacake: Instancing", nullptr, nullptr);
 
-	ErrorCheck::PrintError(true);
+	ErrorCheck::printError(true);
 	GLFWSurfaceInitialisator surfaceInitialisator(window);
 
 	glfwSetWindowSizeCallback(window, window_size_callback);
@@ -82,8 +82,8 @@ int main() {
 	s->init();
 
 	VkExtent2D size = s->size();
-	Queue* queue = d->getGraphicQueue(0);
-	PresentationQueue* presentQueue = d->getPresentQueue();
+	GraphicQueue queue = d->getGraphicQueue(0);
+	PresentationQueue presentQueue = d->getPresentQueue();
 	CommandBuffer  commandBuffer;
 	commandBuffer.addSemaphore();
 

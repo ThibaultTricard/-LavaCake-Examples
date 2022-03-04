@@ -36,13 +36,12 @@ int main() {
 	d->initDevices(0, 1, surfaceInitialisator);
 	SwapChain* s = SwapChain::getSwapChain();
 	s->init();
-	Queue* graphicQueue = d->getGraphicQueue(0);
+	GraphicQueue graphicQueue = d->getGraphicQueue(0);
 	CommandBuffer cmdBuf;
 	cmdBuf.addSemaphore();
 	VkExtent2D size = s->size();
 
-	ImGuiWrapper* gui = new ImGuiWrapper();
-	gui->initGui(d->getGraphicQueue(0), cmdBuf, vec2i({ 1280,720 }), vec2i({ (int)size.width, (int)size.height }));
+	ImGuiWrapper* gui = new ImGuiWrapper(d->getGraphicQueue(0), cmdBuf, vec2i({ 1280,720 }), vec2i({ (int)size.width, (int)size.height }));
 	prepareInputs(window);
 	auto knight = Load3DModelFromObjFile(prefix+"Data/Models/StrollingKnight.obj", true, true);
 	Mesh_t* knightMesh = new IndexedMesh<TRIANGLE>(knight.first.first, knight.first.second, knight.second);
@@ -277,7 +276,7 @@ int main() {
 	lightingattachment.storeDepth = false;
 	lightingattachment.showOnScreenIndex = 0;
 
-	Lightingpass->addSubPass({ &lightingPipeline, gui->getPipeline() }, lightingattachment);
+	Lightingpass->addSubPass({ &lightingPipeline, gui->getPipeline().get()}, lightingattachment);
 	Lightingpass->compile();
 
 	FrameBuffer* lightingBuffer = new FrameBuffer(size.width, size.height);
