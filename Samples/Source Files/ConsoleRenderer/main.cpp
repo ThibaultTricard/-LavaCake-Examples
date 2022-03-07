@@ -208,7 +208,7 @@ int main() {
 		VkDevice logical = d->getLogicalDevice();
 		VkSwapchainKHR& swapchain = s->getHandle();
 		
-		SwapChainImage& image = s->acquireImage();
+		const SwapChainImage& image = s->acquireImage();
 
 		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
 		wait_semaphore_infos.push_back({
