@@ -60,32 +60,30 @@ int main() {
 	quad->appendIndex(3);
 	quad->appendIndex(0);
 
-	Framework::VertexBuffer* quad_vertex_buffer = new Framework::VertexBuffer({ quad });
-	quad_vertex_buffer->allocate(queue, commandBuffer[0]);
+	Framework::VertexBuffer* quad_vertex_buffer = new Framework::VertexBuffer(queue, commandBuffer[0], { quad });
 
 	//texture map
-	Framework::Image input = createTextureBuffer(queue, commandBuffer[0], prefix+"Data/Textures/auxetic_x5.jpg", 4);
+	Image  input = createTextureBuffer(queue, commandBuffer[0], prefix+"Data/Textures/auxetic_x5.jpg", 4);
 
 
-	Framework::Buffer* output_pass1 = new Framework::Buffer();
+	
 	std::vector<float> rawdata = std::vector<float>(input.width() * input.height() * uint32_t(2));
-	output_pass1->allocate(queue, commandBuffer[0],rawdata, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT);
+	Buffer output_pass1(queue, commandBuffer[0],rawdata, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT);
 
-	Framework::Buffer* output_pass2 = new Framework::Buffer();
-	output_pass2->allocate(queue, commandBuffer[0], rawdata, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT);
+	Buffer output_pass2(queue, commandBuffer[0], rawdata, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT);
 
-	Framework::UniformBuffer* sizeBuffer = new Framework::UniformBuffer();
-	sizeBuffer->addVariable("width", input.width());
-	sizeBuffer->addVariable("height", input.height());
-	sizeBuffer->end();
+	UniformBuffer sizeBuffer;
+	sizeBuffer.addVariable("width", input.width());
+	sizeBuffer.addVariable("height", input.height());
+	sizeBuffer.end();
 
 	//pass1 
 	Framework::ComputePipeline* computePipeline1 = new Framework::ComputePipeline();
 
-	Framework::ComputeShaderModule* computeFourier1 = new Framework::ComputeShaderModule(prefix+"Data/Shaders/FourierTransform/fourier_pass1.comp.spv");
+	ComputeShaderModule computeFourier1(prefix+"Data/Shaders/FourierTransform/fourier_pass1.comp.spv");
 	computePipeline1->setComputeModule(computeFourier1);
 
-	computePipeline1->addTextureBuffer(&input, VK_SHADER_STAGE_COMPUTE_BIT, 0);
+	computePipeline1->addTextureBuffer(input, VK_SHADER_STAGE_COMPUTE_BIT, 0);
 	computePipeline1->addTexelBuffer(output_pass1, VK_SHADER_STAGE_COMPUTE_BIT, 1);
 	computePipeline1->addUniformBuffer(sizeBuffer, VK_SHADER_STAGE_COMPUTE_BIT, 2);
 
@@ -94,7 +92,7 @@ int main() {
 	//pass2
 	Framework::ComputePipeline* computePipeline2 = new Framework::ComputePipeline();
 
-	Framework::ComputeShaderModule* computeFourier2 = new Framework::ComputeShaderModule(prefix+"Data/Shaders/FourierTransform/fourier_pass2.comp.spv");
+	ComputeShaderModule computeFourier2(prefix+"Data/Shaders/FourierTransform/fourier_pass2.comp.spv");
 	computePipeline2->setComputeModule(computeFourier2);
 
 	computePipeline2->addTexelBuffer(output_pass1, VK_SHADER_STAGE_COMPUTE_BIT, 0);
@@ -107,9 +105,9 @@ int main() {
 	//renderPass
 	Framework::RenderPass* showPass = new Framework::RenderPass();
 
-	Framework::GraphicPipeline* pipeline = new Framework::GraphicPipeline(vec3f({ 0,0,0 }) , vec3f({ float(size.width),float(size.height),1.0f }) , vec2f({ 0,0 }) , vec2f({ float(size.width),float(size.height) }));
-	Framework::VertexShaderModule* vertexShader = new Framework::VertexShaderModule(prefix+"Data/Shaders/FourierTransform/shader.vert.spv");
-	Framework::FragmentShaderModule* fragmentShader = new Framework::FragmentShaderModule(prefix+"Data/Shaders/FourierTransform/shader.frag.spv");
+	std::shared_ptr < GraphicPipeline > pipeline = std::make_shared < GraphicPipeline >(vec3f({ 0,0,0 }) , vec3f({ float(size.width),float(size.height),1.0f }) , vec2f({ 0,0 }) , vec2f({ float(size.width),float(size.height) }));
+	VertexShaderModule vertexShader(prefix+"Data/Shaders/FourierTransform/shader.vert.spv");
+	FragmentShaderModule fragmentShader(prefix+"Data/Shaders/FourierTransform/shader.frag.spv");
 	pipeline->setVertexModule(vertexShader);
 	pipeline->setFragmentModule(fragmentShader);
 	pipeline->setVerticesInfo(quad_vertex_buffer->getBindingDescriptions(), quad_vertex_buffer->getAttributeDescriptions(), quad_vertex_buffer->primitiveTopology());
@@ -141,7 +139,7 @@ int main() {
 	commandBuffer[0].resetFence();
 	commandBuffer[0].beginRecord();
 
-	sizeBuffer->update(commandBuffer[0]);
+	sizeBuffer.update(commandBuffer[0]);
 
 	computePipeline1->compute(commandBuffer[0], input.width(), input.height(), 1);
 

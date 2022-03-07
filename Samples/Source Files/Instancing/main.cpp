@@ -13,7 +13,7 @@ std::string prefix ="../";
 std::string prefix ="";
 #endif
 
-GraphicPipeline* pipeline;
+std::shared_ptr < GraphicPipeline > pipeline;
 VertexBuffer* triangle_vertex_buffer;
 std::vector<PushConstant* > constants(3);
 
@@ -26,10 +26,10 @@ RenderPass* createRenderPass(const Queue& queue, CommandBuffer& commandBuffer) {
 
 
 
-	VertexShaderModule* vertexShader = new VertexShaderModule(prefix + "Data/Shaders/Instancing/shader.vert.spv");
-	FragmentShaderModule* fragmentShader = new FragmentShaderModule(prefix + "Data/Shaders/Instancing/shader.frag.spv");
+	VertexShaderModule vertexShader(prefix + "Data/Shaders/Instancing/shader.vert.spv");
+	FragmentShaderModule fragmentShader(prefix + "Data/Shaders/Instancing/shader.frag.spv");
 
-	pipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
+	pipeline = std::make_shared < GraphicPipeline >(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 	pipeline->setVertexModule(vertexShader);
 	pipeline->setFragmentModule(fragmentShader);
 	pipeline->setVerticesInfo(triangle_vertex_buffer->getBindingDescriptions(), triangle_vertex_buffer->getAttributeDescriptions() ,triangle_vertex_buffer->primitiveTopology());
@@ -117,8 +117,7 @@ int main() {
 	constants[2]->addVariable("model", model2);
 
 	//creating an allocating a vertex buffer
-	triangle_vertex_buffer = new VertexBuffer({ triangle });
-	triangle_vertex_buffer->allocate(queue, commandBuffer);
+	triangle_vertex_buffer = new VertexBuffer(queue, commandBuffer, { triangle });
 
 
 	auto pass = createRenderPass(queue, commandBuffer);

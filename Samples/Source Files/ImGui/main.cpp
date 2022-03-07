@@ -47,14 +47,13 @@ int main() {
 	triangle->appendVertex({ 0.75f,	0.75f , 0.0f,  0.0f	, 1.0f	, 0.0f });
 	triangle->appendVertex({ 0.0f , -0.75f, 0.0f, 0.0f	, 0.0f	, 1.0f });
 
-	VertexBuffer* triangle_vertex_buffer = new VertexBuffer({ triangle });
-	triangle_vertex_buffer->allocate(queue, commandBuffer[0]);
+	VertexBuffer* triangle_vertex_buffer = new VertexBuffer(queue, commandBuffer[0],{ triangle });
 
 	RenderPass* pass = new RenderPass();
-	GraphicPipeline* pipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
+	std::shared_ptr < GraphicPipeline > pipeline = std::make_shared < GraphicPipeline >(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
-  VertexShaderModule* vertexShader = new VertexShaderModule(prefix+"Data/Shaders/helloworld/shader.vert.spv");
-	FragmentShaderModule* fragmentShader = new FragmentShaderModule(prefix+"Data/Shaders/helloworld/shader.frag.spv");
+  VertexShaderModule vertexShader = VertexShaderModule(prefix+"Data/Shaders/helloworld/shader.vert.spv");
+	FragmentShaderModule fragmentShader = FragmentShaderModule(prefix+"Data/Shaders/helloworld/shader.frag.spv");
 
 
 	pipeline->setVertexModule(vertexShader);
@@ -72,7 +71,7 @@ int main() {
 	SA.useDepth = true;
 	SA.showOnScreenIndex = 0;
 
-	pass->addSubPass({ pipeline, gui->getPipeline().get()}, SA);
+	pass->addSubPass({ pipeline, gui->getPipeline()}, SA);
 	pass->addDependencies(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 	pass->addDependencies(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 

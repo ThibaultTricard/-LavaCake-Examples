@@ -45,18 +45,14 @@ int main() {
 
 	
 
-	VertexBuffer* sphere_vertex_buffer = new VertexBuffer({ sphere_mesh });
-	sphere_vertex_buffer->allocate(queue, commandBuffer[0]);
+	VertexBuffer* sphere_vertex_buffer = new VertexBuffer(queue, commandBuffer[0],{ sphere_mesh });
 
 	//Skybox Data
 
 	std::pair<std::vector<float>, vertexFormat > sky = Load3DModelFromObjFile(prefix+"Data/Models/cube.obj", true, false, false, true);
 	Geometry::Mesh_t* sky_mesh = new Geometry::Mesh<Geometry::TRIANGLE>(sky.first, sky.second);
 	
-
-
-	VertexBuffer* sky_vertex_buffer = new VertexBuffer({ sky_mesh });
-	sky_vertex_buffer->allocate(queue, commandBuffer[0]);
+	VertexBuffer* sky_vertex_buffer = new VertexBuffer(queue, commandBuffer[0], { sky_mesh });
 
 
 	//PostProcessQuad
@@ -75,18 +71,17 @@ int main() {
 	quad->appendIndex(3);
 	quad->appendIndex(0);
 
-	VertexBuffer* quad_vertex_buffer = new VertexBuffer({ quad });
-	quad_vertex_buffer->allocate(queue, commandBuffer[0]);
+	VertexBuffer* quad_vertex_buffer = new VertexBuffer(queue, commandBuffer[0],{ quad });
 	
 
 	//Uniform Buffer
-	UniformBuffer* uniforms = new UniformBuffer();
+	UniformBuffer uniforms = UniformBuffer();
 	mat4 proj = PreparePerspectiveProjectionMatrix(static_cast<float>(size.width) / static_cast<float>(size.height),
 		50.0f, 0.5f, 10.0f);
 	mat4 modelView = PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
-	uniforms->addVariable("modelView", modelView);
-	uniforms->addVariable("projection",proj);
-	uniforms->end();
+	uniforms.addVariable("modelView", modelView);
+	uniforms.addVariable("projection",proj);
+	uniforms.end();
 
 	//SkyBox texture
 	Image skyCubeMap = createCubeMap(queue, commandBuffer[0],prefix+"Data/Textures/Skansen/", 4);
@@ -105,18 +100,18 @@ int main() {
 	cameraConstant->addVariable("camera", camera);
 
 	//Color Attachment
-	Image colorAttachemnt = createAttachment(queue, commandBuffer[0], size.width, size.height, s->imageFormat(), attachmentType::COLOR_ATTACHMENT);
+	std::shared_ptr< Image > colorAttachemnt = std::make_shared < Image > (createAttachment(queue, commandBuffer[0], size.width, size.height, s->imageFormat(), attachmentType::COLOR_ATTACHMENT));
 	
 
 	//Render Pass
 	RenderPass renderPass = RenderPass( );
 
 	
-	GraphicPipeline* sphereRenderPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
-	VertexShaderModule* sphereVertex = new VertexShaderModule(prefix+"Data/Shaders/PostProcess/model.vert.spv");
+	std::shared_ptr < GraphicPipeline > sphereRenderPipeline = std::make_shared < GraphicPipeline >(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
+	VertexShaderModule sphereVertex(prefix+"Data/Shaders/PostProcess/model.vert.spv");
 	sphereRenderPipeline->setVertexModule(sphereVertex);
 
-	FragmentShaderModule* sphereFrag = new FragmentShaderModule(prefix+"Data/Shaders/PostProcess/model.frag.spv");
+	FragmentShaderModule sphereFrag (prefix+"Data/Shaders/PostProcess/model.frag.spv");
 	sphereRenderPipeline->setFragmentModule(sphereFrag);
 
 	sphereRenderPipeline->setVerticesInfo(sphere_vertex_buffer->getBindingDescriptions(), sphere_vertex_buffer->getAttributeDescriptions(), sphere_vertex_buffer->primitiveTopology());
@@ -125,22 +120,22 @@ int main() {
 
 	sphereRenderPipeline->setVertices({ { sphere_vertex_buffer , {{cameraConstant,VK_SHADER_STAGE_FRAGMENT_BIT}} } });
 	sphereRenderPipeline->addUniformBuffer(uniforms, VK_SHADER_STAGE_VERTEX_BIT, 0);
-	sphereRenderPipeline->addTextureBuffer(&skyCubeMap, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
+	sphereRenderPipeline->addTextureBuffer(skyCubeMap, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 
 
-	GraphicPipeline* skyRenderPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
+	std::shared_ptr < GraphicPipeline > skyRenderPipeline = std::make_shared < GraphicPipeline >(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
-	VertexShaderModule* skyVertex = new VertexShaderModule(prefix+"Data/Shaders/PostProcess/skybox.vert.spv");
+	VertexShaderModule skyVertex(prefix+"Data/Shaders/PostProcess/skybox.vert.spv");
 	skyRenderPipeline->setVertexModule(skyVertex);
 
-	FragmentShaderModule* skyFrag = new FragmentShaderModule(prefix+"Data/Shaders/PostProcess/skybox.frag.spv");
+	FragmentShaderModule skyFrag(prefix+"Data/Shaders/PostProcess/skybox.frag.spv");
 	skyRenderPipeline->setFragmentModule(skyFrag);
 
 	skyRenderPipeline->setVerticesInfo(sky_vertex_buffer->getBindingDescriptions(), sky_vertex_buffer->getAttributeDescriptions(), sky_vertex_buffer->primitiveTopology());
 
 	skyRenderPipeline->setVertices({ sky_vertex_buffer });
 	skyRenderPipeline->addUniformBuffer(uniforms, VK_SHADER_STAGE_VERTEX_BIT, 0);
-	skyRenderPipeline->addTextureBuffer(&skyCubeMap, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
+	skyRenderPipeline->addTextureBuffer(skyCubeMap, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 	skyRenderPipeline->setCullMode(VK_CULL_MODE_FRONT_BIT);
 
 	SubpassAttachment SA;
@@ -150,11 +145,11 @@ int main() {
 
 	renderPass.addSubPass({ sphereRenderPipeline,skyRenderPipeline }, SA);
 
-	GraphicPipeline* postProcessPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
-	VertexShaderModule* postProcessVertex = new VertexShaderModule(prefix+"Data/Shaders/PostProcess/postprocess.vert.spv");
+	std::shared_ptr < GraphicPipeline > postProcessPipeline = std::make_shared < GraphicPipeline >(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
+	VertexShaderModule postProcessVertex(prefix+"Data/Shaders/PostProcess/postprocess.vert.spv");
 	postProcessPipeline->setVertexModule(postProcessVertex);
 
-	FragmentShaderModule* postProcessFrag = new FragmentShaderModule(prefix+"Data/Shaders/PostProcess/postprocess.frag.spv");
+	FragmentShaderModule postProcessFrag(prefix+"Data/Shaders/PostProcess/postprocess.frag.spv");
 	postProcessPipeline->setFragmentModule(postProcessFrag);
 
 	postProcessPipeline->setPushContantInfo({ { timeConstant->size() ,VK_SHADER_STAGE_FRAGMENT_BIT } });
@@ -163,7 +158,7 @@ int main() {
 
 	postProcessPipeline->setVertices({ { quad_vertex_buffer, {{timeConstant,VK_SHADER_STAGE_FRAGMENT_BIT}} } });
 	
-	postProcessPipeline->addAttachment(&colorAttachemnt, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
+	postProcessPipeline->addAttachment(colorAttachemnt, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 
 
 	SA = SubpassAttachment();
@@ -265,7 +260,7 @@ int main() {
 			});
 		
 		if (updateUniformBuffer) {
-			uniforms->update(commandBuffer[f]);
+			uniforms.update(commandBuffer[f]);
 			updateUniformBuffer = false;
 		}
 

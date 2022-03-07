@@ -22,6 +22,8 @@ float lerp(float a, float b, float f)
 
 int main() {
 
+	ErrorCheck::printError(true, 5);
+
 	glfwInit();
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -46,8 +48,7 @@ int main() {
 	auto knight = Load3DModelFromObjFile(prefix+"Data/Models/StrollingKnight.obj", true, true);
 	Mesh_t* knightMesh = new IndexedMesh<TRIANGLE>(knight.first.first, knight.first.second, knight.second);
 
-	VertexBuffer* vertexBuffer = new VertexBuffer({ knightMesh });
-	vertexBuffer->allocate(graphicQueue, cmdBuf);
+	VertexBuffer* vertexBuffer = new VertexBuffer(graphicQueue, cmdBuf,{ knightMesh });
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -56,22 +57,22 @@ int main() {
 
 
 	//uniform buffer
-	UniformBuffer* b = new UniformBuffer();
+	UniformBuffer b;
 	mat4 proj = PreparePerspectiveProjectionMatrix(static_cast<float>(size.width) / static_cast<float>(size.height),
 		50.0f, 0.01f, 5.0f);
 	mat4 modelView = PrepareTranslationMatrix(0.0f, 0.0f, -4.0f);
-	b->addVariable("modelView", modelView);
-	b->addVariable("projection", proj);
-	b->end();
+	b.addVariable("modelView", modelView);
+	b.addVariable("projection", proj);
+	b.end();
 
 
 	RenderPass Gpass(VK_FORMAT_R32G32B32A32_SFLOAT, VK_FORMAT_D32_SFLOAT);
-	GraphicPipeline* Gpipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
+	std::shared_ptr < GraphicPipeline > Gpipeline = std::make_shared < GraphicPipeline >(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
-	VertexShaderModule* Gvertex = new  VertexShaderModule(prefix+"Data/Shaders/SSAO/Gbuffer.vert.spv");
+	VertexShaderModule Gvertex(prefix+"Data/Shaders/SSAO/Gbuffer.vert.spv");
 	Gpipeline->setVertexModule(Gvertex);
 
-	FragmentShaderModule* Gfragment = new  FragmentShaderModule(prefix+"Data/Shaders/SSAO/Gbuffer.frag.spv");
+	FragmentShaderModule Gfragment(prefix+"Data/Shaders/SSAO/Gbuffer.frag.spv");
 	Gpipeline->setFragmentModule(Gfragment);
 
 	Gpipeline->setVerticesInfo(vertexBuffer->getBindingDescriptions(), vertexBuffer->getAttributeDescriptions(), vertexBuffer->primitiveTopology());
@@ -93,8 +94,8 @@ int main() {
 	Gpass.compile();
 	
 
-	FrameBuffer* G = new FrameBuffer(size.width, size.height);
-	Gpass.prepareOutputFrameBuffer(graphicQueue, cmdBuf, *G);
+	FrameBuffer G (size.width, size.height);
+	Gpass.prepareOutputFrameBuffer(graphicQueue, cmdBuf, G);
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -118,11 +119,10 @@ int main() {
 	quadMesh->appendIndex(3);
 	quadMesh->appendIndex(0);
 
-	VertexBuffer* quadBuffer = new VertexBuffer({quadMesh});
-	quadBuffer->allocate(graphicQueue, cmdBuf);
+	VertexBuffer* quadBuffer = new VertexBuffer(graphicQueue, cmdBuf,{quadMesh});
 
 
-	UniformBuffer* SSAOuni = new UniformBuffer();
+	UniformBuffer SSAOuni;
 
 	std::array<vec4f, 64> samples;
 	srand((int)time(NULL));
@@ -160,19 +160,19 @@ int main() {
 
 	float radius = 0.5;
 
-	SSAOuni->addVariable("samples", samples);
-	SSAOuni->addVariable("projection", proj);
-	SSAOuni->addVariable("radius", radius);
-	SSAOuni->addVariable("seed", randomVectors);
-	SSAOuni->end();
+	SSAOuni.addVariable("samples", samples);
+	SSAOuni.addVariable("projection", proj);
+	SSAOuni.addVariable("radius", radius);
+	SSAOuni.addVariable("seed", randomVectors);
+	SSAOuni.end();
 
 
 	RenderPass* SSAORenderPass = new RenderPass(VK_FORMAT_R32G32B32A32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
 
-	GraphicPipeline* SSAOpipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
+	std::shared_ptr < GraphicPipeline > SSAOpipeline = std::make_shared < GraphicPipeline >(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
-	VertexShaderModule* SSAOvertex = new VertexShaderModule(prefix+"Data/Shaders/SSAO/SSAO.vert.spv");
-	FragmentShaderModule* SSAOfragment = new FragmentShaderModule(prefix+"Data/Shaders/SSAO/SSAO.frag.spv");
+	VertexShaderModule SSAOvertex(prefix+"Data/Shaders/SSAO/SSAO.vert.spv");
+	FragmentShaderModule SSAOfragment(prefix+"Data/Shaders/SSAO/SSAO.frag.spv");
 
 	SSAOpipeline->setVerticesInfo(quadBuffer->getBindingDescriptions(), quadBuffer->getAttributeDescriptions(), quadBuffer->primitiveTopology());
 	SSAOpipeline->setVertices({quadBuffer});
@@ -199,8 +199,8 @@ int main() {
 	SSAORenderPass->compile();
 
 
-	FrameBuffer* SSAO = new FrameBuffer(size.width, size.height);
-	SSAORenderPass->prepareOutputFrameBuffer(graphicQueue, cmdBuf, *SSAO);
+	FrameBuffer SSAO(size.width, size.height);
+	SSAORenderPass->prepareOutputFrameBuffer(graphicQueue, cmdBuf, SSAO);
 
 
 
@@ -210,19 +210,19 @@ int main() {
 
 	RenderPass* Blurpass = new RenderPass(VK_FORMAT_R32G32B32A32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
 
-	GraphicPipeline blurPipeline (vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
+	std::shared_ptr < GraphicPipeline > blurPipeline  = std::make_shared < GraphicPipeline >(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
 
-	blurPipeline.setVerticesInfo(quadBuffer->getBindingDescriptions(), quadBuffer->getAttributeDescriptions(), quadBuffer->primitiveTopology());
-	blurPipeline.setVertices({ quadBuffer });
+	blurPipeline->setVerticesInfo(quadBuffer->getBindingDescriptions(), quadBuffer->getAttributeDescriptions(), quadBuffer->primitiveTopology());
+	blurPipeline->setVertices({ quadBuffer });
 
-	VertexShaderModule* blurVert = new VertexShaderModule(prefix+"Data/Shaders/SSAO/blur.vert.spv");
-	FragmentShaderModule* blurFrag = new FragmentShaderModule(prefix+"Data/Shaders/SSAO/blur.frag.spv");
+	VertexShaderModule blurVert(prefix+"Data/Shaders/SSAO/blur.vert.spv");
+	FragmentShaderModule blurFrag(prefix+"Data/Shaders/SSAO/blur.frag.spv");
 
-	blurPipeline.setVertexModule(blurVert);
-	blurPipeline.setFragmentModule(blurFrag);
+	blurPipeline->setVertexModule(blurVert);
+	blurPipeline->setFragmentModule(blurFrag);
 
-	blurPipeline.addFrameBuffer(SSAO,VK_SHADER_STAGE_FRAGMENT_BIT, 0, 0);
+	blurPipeline->addFrameBuffer(SSAO,VK_SHADER_STAGE_FRAGMENT_BIT, 0, 0);
 
 	SubpassAttachment Blurattachment;
 	Blurattachment.showOnScreen = false;
@@ -232,11 +232,11 @@ int main() {
 	Blurattachment.storeDepth = false;
 	Blurattachment.showOnScreenIndex = 0;
 
-	Blurpass->addSubPass({ &blurPipeline }, Blurattachment);
+	Blurpass->addSubPass({ blurPipeline }, Blurattachment);
 	Blurpass->compile();
 
-	FrameBuffer* BlurBuffer = new FrameBuffer(size.width, size.height);
-	Blurpass->prepareOutputFrameBuffer(graphicQueue, cmdBuf,*BlurBuffer);
+	FrameBuffer  BlurBuffer(size.width, size.height);
+	Blurpass->prepareOutputFrameBuffer(graphicQueue, cmdBuf,BlurBuffer);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//																					Lighting																									//
@@ -251,22 +251,22 @@ int main() {
 
 	RenderPass* Lightingpass = new RenderPass();
 
-	GraphicPipeline lightingPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
+	std::shared_ptr<GraphicPipeline> lightingPipeline = std::make_shared<GraphicPipeline>( vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }) );
 
-	lightingPipeline.setVertices({ quadBuffer });
-	lightingPipeline.setVerticesInfo(quadBuffer->getBindingDescriptions(), quadBuffer->getAttributeDescriptions(), quadBuffer->primitiveTopology());
+	lightingPipeline->setVerticesInfo(quadBuffer->getBindingDescriptions(), quadBuffer->getAttributeDescriptions(), quadBuffer->primitiveTopology());
+	lightingPipeline->setVertices({ quadBuffer });
 
-	VertexShaderModule* lightingVert = new VertexShaderModule(prefix+"Data/Shaders/SSAO/lighting.vert.spv");
-	FragmentShaderModule* lightingFrag = new FragmentShaderModule(prefix+"Data/Shaders/SSAO/lighting.frag.spv");
+	VertexShaderModule lightingVert(prefix+"Data/Shaders/SSAO/lighting.vert.spv");
+	FragmentShaderModule lightingFrag(prefix+"Data/Shaders/SSAO/lighting.frag.spv");
 
-	lightingPipeline.setVertexModule(lightingVert);
-	lightingPipeline.setFragmentModule(lightingFrag);
+	lightingPipeline->setVertexModule(lightingVert);
+	lightingPipeline->setFragmentModule(lightingFrag);
 
-	lightingPipeline.addFrameBuffer(G, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 0);
-	lightingPipeline.addFrameBuffer(G, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1);
-	lightingPipeline.addFrameBuffer(G, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 2);
-	lightingPipeline.addFrameBuffer(BlurBuffer, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 0);
-	lightingPipeline.addUniformBuffer(&lightbuffer, VK_SHADER_STAGE_FRAGMENT_BIT, 4);
+	lightingPipeline->addFrameBuffer(G, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 0);
+	lightingPipeline->addFrameBuffer(G, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1);
+	lightingPipeline->addFrameBuffer(G, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 2);
+	lightingPipeline->addFrameBuffer(BlurBuffer, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 0);
+	lightingPipeline->addUniformBuffer(lightbuffer, VK_SHADER_STAGE_FRAGMENT_BIT, 4);
 
 	SubpassAttachment lightingattachment;
 	lightingattachment.showOnScreen = true;
@@ -276,7 +276,7 @@ int main() {
 	lightingattachment.storeDepth = false;
 	lightingattachment.showOnScreenIndex = 0;
 
-	Lightingpass->addSubPass({ &lightingPipeline, gui->getPipeline().get()}, lightingattachment);
+	Lightingpass->addSubPass({ lightingPipeline, gui->getPipeline()}, lightingattachment);
 	Lightingpass->compile();
 
 	FrameBuffer* lightingBuffer = new FrameBuffer(size.width, size.height);
@@ -363,29 +363,29 @@ int main() {
 		cmdBuf.beginRecord();
 
 
-		SSAOuni->setVariable("radius", radius);
-		SSAOuni->update(cmdBuf);
+		SSAOuni.setVariable("radius", radius);
+		SSAOuni.update(cmdBuf);
 
 		lightbuffer.setVariable("position", vec4f({ x,y,z,0.0 }));
 		lightbuffer.setVariable("color", vec4f({ red,green,blue,0.0 }));
 		lightbuffer.update(cmdBuf);
 
 		if (updateUniform) {
-			b->update(cmdBuf);
+			b.update(cmdBuf);
 			updateUniform = false;
 		}
 
 
 		
 
-		Gpass.draw(cmdBuf, *G, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
+		Gpass.draw(cmdBuf, G, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
 
 
 		
-		SSAORenderPass->draw(cmdBuf, *SSAO, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
+		SSAORenderPass->draw(cmdBuf, SSAO, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
 
 		
-		Blurpass->draw(cmdBuf, *BlurBuffer, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
+		Blurpass->draw(cmdBuf, BlurBuffer, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
 
 		Lightingpass->setSwapChainImage(*lightingBuffer, swapChainImage);
 		Lightingpass->draw(cmdBuf, *lightingBuffer, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
@@ -398,5 +398,5 @@ int main() {
 
 	}
 
-	d->end();
+	d->waitForAllCommands();
 }

@@ -24,8 +24,8 @@ RenderPass* createRenderPass(const Queue& queue, CommandBuffer& commandBuffer) {
 	//each vertex is a 3D position followed by a RGB color
 	
 
-	std::shared_ptr < VertexShaderModule> vertexShader = std::make_shared< VertexShaderModule >(prefix + "Data/Shaders/helloworld/shader.vert.spv");
-	std::shared_ptr < FragmentShaderModule >  fragmentShader = std::make_shared < FragmentShaderModule >(prefix + "Data/Shaders/helloworld/shader.frag.spv");
+	VertexShaderModule vertexShader(prefix + "Data/Shaders/helloworld/shader.vert.spv");
+	FragmentShaderModule fragmentShader(prefix + "Data/Shaders/helloworld/shader.frag.spv");
 
 	pipeline = std::make_shared<GraphicPipeline>(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 	pipeline->setVertexModule(vertexShader);
