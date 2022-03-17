@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
+set(SPV_VERSION "spv1.3" CACHE STRING "spriv version, to launch raytracing example change to a version supperior to spv1.4")
+
 add_subdirectory(LavaCake)
 
 ###############################################################
@@ -27,7 +29,7 @@ macro( list_samples )
 				file( GLOB SHADER_SOURCE_FILES "Samples/Data/Shaders/${SAMPLE}/*")
 				FOREACH( shader ${SHADER_SOURCE_FILES} )
 					string(REGEX MATCH "[A-Za-z0-9_\\-]*\\.[A-Za-z0-9]*" FILENAME ${shader})
-					addShader(${shader} ${CMAKE_CURRENT_BINARY_DIR}/Data/Shaders/${SAMPLE}/${FILENAME}.spv spv1.3)
+					addShader(${shader} ${CMAKE_CURRENT_BINARY_DIR}/Data/Shaders/${SAMPLE}/${FILENAME}.spv ${SPV_VERSION})
 				endforeach()
 				add_executable( ${SAMPLE} ${SAMPLE_SOURCE_FILES} )
 				AutoSPIRV(${SAMPLE})
