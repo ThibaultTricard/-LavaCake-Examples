@@ -216,7 +216,6 @@ int main() {
 		f = f % nbFrames;
 
 		VkDevice logical = d->getLogicalDevice();
-		VkSwapchainKHR& swapchain = s->getHandle();
 		VkExtent2D size = s->size();
 
 		

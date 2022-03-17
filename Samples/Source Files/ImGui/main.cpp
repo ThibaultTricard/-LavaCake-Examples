@@ -29,7 +29,7 @@ int main() {
 	int nbFrames = 1;
 	LavaCake::Framework::Device* d = LavaCake::Framework::Device::getDevice();
 	d->initDevices(0, 1, surfaceInitialisator);
-	LavaCake::Framework::SwapChain* s = LavaCake::Framework::SwapChain::getSwapChain();
+	SwapChain* s = LavaCake::Framework::SwapChain::getSwapChain();
 	s->init(); 
 	VkExtent2D size = s->size();
 	GraphicQueue queue = d->getGraphicQueue(0);
@@ -153,7 +153,6 @@ int main() {
 		
 		
 		VkDevice logical = d->getLogicalDevice();
-		VkSwapchainKHR& swapchain = s->getHandle();
 		const SwapChainImage& image = s->acquireImage();
 
 

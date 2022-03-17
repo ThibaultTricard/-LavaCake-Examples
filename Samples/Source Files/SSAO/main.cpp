@@ -306,8 +306,6 @@ int main() {
 		VkDevice logical = d->getLogicalDevice();
 		auto presentQueue = d->getPresentQueue();
 		
-		VkSwapchainKHR& swapchain = s->getHandle();
-
 		const SwapChainImage& swapChainImage = s->acquireImage();
 
 		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
@@ -397,6 +395,6 @@ int main() {
 		s->presentImage(presentQueue, swapChainImage, { cmdBuf.getSemaphore(0) });
 
 	}
-
+	s = nullptr;
 	d->waitForAllCommands();
 }

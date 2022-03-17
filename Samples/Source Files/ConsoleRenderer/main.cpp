@@ -206,7 +206,6 @@ int main() {
 		f = f % nbFrames;
 		
 		VkDevice logical = d->getLogicalDevice();
-		VkSwapchainKHR& swapchain = s->getHandle();
 		
 		const SwapChainImage& image = s->acquireImage();
 

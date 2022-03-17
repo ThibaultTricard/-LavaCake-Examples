@@ -27,7 +27,7 @@ int main() {
 
 	Framework::Device* d = Framework::Device::getDevice();
 	d->initDevices(1, 1, surfaceInitialisator);
-	LavaCake::Framework::SwapChain* s = LavaCake::Framework::SwapChain::getSwapChain();
+	SwapChain* s = SwapChain::getSwapChain();
 	s->init();
 
 	GraphicQueue queue = d->getGraphicQueue(0);

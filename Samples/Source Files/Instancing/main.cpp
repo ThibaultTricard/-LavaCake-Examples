@@ -136,7 +136,6 @@ int main() {
 		glfwPollEvents();
 	
 		VkDevice logical = d->getLogicalDevice();
-		VkSwapchainKHR& swapchain = s->getHandle();
 		
 
 		commandBuffer.wait(2000000000);
