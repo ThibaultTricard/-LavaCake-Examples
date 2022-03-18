@@ -40,7 +40,7 @@ int main() {
 	s->init();
 	GraphicQueue graphicQueue = d->getGraphicQueue(0);
 	CommandBuffer cmdBuf;
-	cmdBuf.addSemaphore();
+	std::shared_ptr<Semaphore> semaphore = std::make_shared<Semaphore>();
 	VkExtent2D size = s->size();
 
 	ImGuiWrapper* gui = new ImGuiWrapper(d->getGraphicQueue(0), cmdBuf, vec2i({ 1280,720 }), vec2i({ (int)size.width, (int)size.height }));
@@ -308,7 +308,7 @@ int main() {
 		
 		const SwapChainImage& swapChainImage = s->acquireImage();
 
-		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
+		std::vector<waitSemaphoreInfo> wait_semaphore_infos = {};
 		wait_semaphore_infos.push_back({
 			swapChainImage.getSemaphore(),												// VkSemaphore            Semaphore
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
@@ -389,10 +389,10 @@ int main() {
 		Lightingpass->draw(cmdBuf, *lightingBuffer, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } });
 
 		cmdBuf.endRecord();
-		cmdBuf.submit(graphicQueue, wait_semaphore_infos, { cmdBuf.getSemaphore(0) });
+		cmdBuf.submit(graphicQueue, wait_semaphore_infos, { semaphore });
 		
 
-		s->presentImage(presentQueue, swapChainImage, { cmdBuf.getSemaphore(0) });
+		s->presentImage(presentQueue, swapChainImage, { semaphore });
 
 	}
 	s = nullptr;

@@ -85,7 +85,7 @@ int main() {
 	GraphicQueue queue = d->getGraphicQueue(0);
 	PresentationQueue presentQueue = d->getPresentQueue();
 	CommandBuffer  commandBuffer;
-	commandBuffer.addSemaphore();
+	std::shared_ptr<Semaphore> semaphore = std::make_shared<Semaphore>();
 
 
 	vertexFormat format = vertexFormat({ POS3,COL3 });
@@ -161,7 +161,7 @@ int main() {
 
 		const SwapChainImage& image = s->acquireImage();
 
-		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
+		std::vector<waitSemaphoreInfo> wait_semaphore_infos = {};
 		wait_semaphore_infos.push_back({
 			image.getSemaphore(),                     // VkSemaphore            Semaphore
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
@@ -177,9 +177,9 @@ int main() {
 
 		commandBuffer.endRecord();
 
-		commandBuffer.submit(queue, wait_semaphore_infos, { commandBuffer.getSemaphore(0) });
+		commandBuffer.submit(queue, wait_semaphore_infos, { semaphore });
 
-		s->presentImage(presentQueue, image, { commandBuffer.getSemaphore(0) });
+		s->presentImage(presentQueue, image, { semaphore });
 	}
 	d->waitForAllCommands();
 }

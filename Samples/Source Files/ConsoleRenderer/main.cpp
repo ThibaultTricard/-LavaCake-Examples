@@ -35,13 +35,15 @@ int main() {
 	GraphicQueue queue = d->getGraphicQueue(0);
 	PresentationQueue present_queue = d->getPresentQueue();
 	std::vector<CommandBuffer> commandBuffer = std::vector<CommandBuffer>(nbFrames);
+
+	std::vector < std::shared_ptr<Semaphore> > semaphores;
 	VkExtent2D size = s->size();
 
 
 	CommandBuffer allocBuff;
 
 	for (uint32_t i = 0; i < nbFrames; i++) {
-		commandBuffer[i].addSemaphore();
+		semaphores.push_back(std::make_shared<Semaphore>());
 	}
 
 	vec3f camera = vec3f({0.0f,0.0f,4.0f});
@@ -209,7 +211,7 @@ int main() {
 		
 		const SwapChainImage& image = s->acquireImage();
 
-		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
+		std::vector<waitSemaphoreInfo> wait_semaphore_infos = {};
 		wait_semaphore_infos.push_back({
 			image.getSemaphore(),                     // VkSemaphore            Semaphore
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
@@ -263,10 +265,10 @@ int main() {
 
 		commandBuffer[f].endRecord();
 
-		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(0) });
+		commandBuffer[f].submit(queue, wait_semaphore_infos, { semaphores[f]});
 	
 
-    s->presentImage(present_queue, image, { commandBuffer[f].getSemaphore(0) });
+    s->presentImage(present_queue, image, { semaphores[f] });
 		
 
 	}

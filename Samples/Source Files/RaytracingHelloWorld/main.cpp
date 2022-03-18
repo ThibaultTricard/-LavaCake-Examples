@@ -31,7 +31,7 @@ int main() {
 	const GraphicQueue& queue = d->getGraphicQueue(0);
 	const PresentationQueue& presentQueue = d->getPresentQueue();
 	CommandBuffer  commandBuffer;
-	commandBuffer.addSemaphore();
+	std::shared_ptr<Semaphore> sempahore = std::make_shared<Semaphore>();
 
 
 	//We define the stride format we need for the mesh here 
@@ -59,7 +59,7 @@ int main() {
 																						0,1,0,0,
 																						0,0,1,0 };
 
-	std::shared_ptr < TransformBuffer > transform = std::make_shared<TransformBuffer>(queue, commandBuffer,transformMatrixKHR);
+	std::shared_ptr < Buffer > transform = std::make_shared<Buffer>(createTransformBuffer(queue, commandBuffer,transformMatrixKHR));
 
 	BottomLevelAccelerationStructure blAS;
 	blAS.addVertexBuffer(triangle_vertex_buffer, transform, true);
@@ -183,7 +183,7 @@ int main() {
 
 		const SwapChainImage& image = s->acquireImage();
 
-		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
+		std::vector<waitSemaphoreInfo> wait_semaphore_infos = {};
 		wait_semaphore_infos.push_back({
 			image.getSemaphore(),                     // VkSemaphore            Semaphore
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
@@ -200,9 +200,9 @@ int main() {
 		
 		commandBuffer.endRecord();
 
-		commandBuffer.submit(queue, wait_semaphore_infos, { commandBuffer.getSemaphore(0) });
+		commandBuffer.submit(queue, wait_semaphore_infos, { sempahore });
 
-		s->presentImage(presentQueue, image, { commandBuffer.getSemaphore(0) });
+		s->presentImage(presentQueue, image, { sempahore });
 		
 	}
 	d->waitForAllCommands();

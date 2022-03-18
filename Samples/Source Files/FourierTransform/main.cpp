@@ -15,7 +15,6 @@ std::string prefix ="";
 
 int main() {
 	ErrorCheck::printError(true, 2);
-	int nbFrames = 2;
 
 	glfwInit();
 
@@ -38,11 +37,10 @@ int main() {
 	VkDevice logical = d->getLogicalDevice();
 	VkExtent2D size = s->size();
 
-	std::vector<Framework::CommandBuffer> commandBuffer = std::vector<Framework::CommandBuffer>(nbFrames);
-	for (int i = 0; i < nbFrames; i++) {
-		commandBuffer[i].addSemaphore();
-		commandBuffer[i].addSemaphore();
-	}
+	CommandBuffer commandBuffer;
+
+	std::shared_ptr<Semaphore> s1 = std::make_shared<Semaphore>();
+
 
 	//PostProcessQuad
 	Geometry::Mesh_t* quad = new Geometry::IndexedMesh<Geometry::TRIANGLE>(Geometry::P3UV);
@@ -60,17 +58,17 @@ int main() {
 	quad->appendIndex(3);
 	quad->appendIndex(0);
 
-	Framework::VertexBuffer* quad_vertex_buffer = new Framework::VertexBuffer(queue, commandBuffer[0], { quad });
+	Framework::VertexBuffer* quad_vertex_buffer = new Framework::VertexBuffer(queue, commandBuffer, { quad });
 
 	//texture map
-	Image  input = createTextureBuffer(queue, commandBuffer[0], prefix+"Data/Textures/auxetic_x5.jpg", 4);
+	Image  input = createTextureBuffer(queue, commandBuffer, prefix+"Data/Textures/mandrill.png", 4);
 
 
 	
 	std::vector<float> rawdata = std::vector<float>(input.width() * input.height() * uint32_t(2));
-	Buffer output_pass1(queue, commandBuffer[0],rawdata, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT);
+	Buffer output_pass1(queue, commandBuffer, rawdata, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT);
 
-	Buffer output_pass2(queue, commandBuffer[0], rawdata, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT);
+	Buffer output_pass2(queue, commandBuffer, rawdata, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT);
 
 	UniformBuffer sizeBuffer;
 	sizeBuffer.addVariable("width", input.width());
@@ -128,64 +126,57 @@ int main() {
 
 
 
-	std::vector<Framework::FrameBuffer*> frameBuffers;
-	for (int i = 0; i < nbFrames; i++) {
-		frameBuffers.push_back(new Framework::FrameBuffer(s->size().width, s->size().height));
-		showPass->prepareOutputFrameBuffer(queue, commandBuffer[0], *frameBuffers[i]);
-	}
+	Framework::FrameBuffer frameBuffers(s->size().width, s->size().height);
 
+	showPass->prepareOutputFrameBuffer(queue, commandBuffer, frameBuffers);
+	
 
-	commandBuffer[0].wait(2000000000);
-	commandBuffer[0].resetFence();
-	commandBuffer[0].beginRecord();
+	commandBuffer.wait(2000000000);
+	commandBuffer.resetFence();
+	commandBuffer.beginRecord();
 
-	sizeBuffer.update(commandBuffer[0]);
+	sizeBuffer.update(commandBuffer);
 
-	computePipeline1->compute(commandBuffer[0], input.width(), input.height(), 1);
+	computePipeline1->compute(commandBuffer, input.width(), input.height(), 1);
 
 	
-	computePipeline2->compute(commandBuffer[0], input.width(), input.height(), 1);
+	computePipeline2->compute(commandBuffer, input.width(), input.height(), 1);
 
 
-	commandBuffer[0].endRecord();
+	commandBuffer.endRecord();
 
-	commandBuffer[0].submit(compute_queue, {}, { commandBuffer[0].getSemaphore(1) });
-
-
+	commandBuffer.submit(compute_queue, {}, { });
 
 
-	int f = 0;
+
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
-		f++;
-		f = f % nbFrames;
-
 
 		const SwapChainImage& image = s->acquireImage();
 
-		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
+		std::vector<waitSemaphoreInfo> wait_semaphore_infos = {};
 		wait_semaphore_infos.push_back({
 			image.getSemaphore(),                     // VkSemaphore            Semaphore
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
 			});
 
 
-		commandBuffer[f].wait(2000000000);
-		commandBuffer[f].resetFence();
-		commandBuffer[f].beginRecord();
+		commandBuffer.wait(2000000000);
+		commandBuffer.resetFence();
+		commandBuffer.beginRecord();
 
 
-		showPass->setSwapChainImage(*frameBuffers[f], image);
+		showPass->setSwapChainImage(frameBuffers, image);
 
 
-		showPass->draw(commandBuffer[f], *frameBuffers[f], vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
+		showPass->draw(commandBuffer, frameBuffers, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
 
-		commandBuffer[f].endRecord();
+		commandBuffer.endRecord();
 
-		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(0) });
+		commandBuffer.submit(queue, wait_semaphore_infos, { s1 });
 		
 
-		s->presentImage(presentQueue, image, { commandBuffer[f].getSemaphore(0) });
+		s->presentImage(presentQueue, image, { s1 });
 	}
 
 	d->waitForAllCommands();

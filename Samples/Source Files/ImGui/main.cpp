@@ -35,8 +35,9 @@ int main() {
 	GraphicQueue queue = d->getGraphicQueue(0);
 	PresentationQueue presentQueue = d->getPresentQueue();
 	std::vector<CommandBuffer> commandBuffer = std::vector<CommandBuffer>(nbFrames);
+	std::vector<std::shared_ptr<Semaphore>> semaphores;
 	for (int i = 0; i < nbFrames; i++) {
-		commandBuffer[i].addSemaphore();
+		semaphores.push_back(std::make_shared<Semaphore>());
 	}
 	ImGuiWrapper* gui = new ImGuiWrapper(d->getGraphicQueue(0), commandBuffer[0], vec2i({ 512 ,512 }), vec2i({ (int)size.width ,(int)size.height }));
 
@@ -160,7 +161,7 @@ int main() {
 
 
 
-		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
+		std::vector<waitSemaphoreInfo> wait_semaphore_infos = {};
 		wait_semaphore_infos.push_back({
 			image.getSemaphore(),                     // VkSemaphore            Semaphore
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
@@ -179,10 +180,10 @@ int main() {
 
 		commandBuffer[f].endRecord();
 
-		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(0) });
+		commandBuffer[f].submit(queue, wait_semaphore_infos, { semaphores[f] });
 		
 
-		s->presentImage(presentQueue, image, { commandBuffer[f].getSemaphore(0) });
+		s->presentImage(presentQueue, image, { semaphores[f] });
 
 		debug++;
 	}

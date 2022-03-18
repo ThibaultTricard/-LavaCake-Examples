@@ -36,9 +36,12 @@ int main() {
 	GraphicQueue queue = d->getGraphicQueue(0);
 	PresentationQueue presentQueue = d->getPresentQueue();
 	std::vector<CommandBuffer> commandBuffer = std::vector<CommandBuffer>(nbFrames);
-	for (int i = 0; i < nbFrames; i++) {
-		commandBuffer[i].addSemaphore();
+	std::vector < std::shared_ptr<Semaphore> > semaphores;
+
+	for (uint32_t i = 0; i < nbFrames; i++) {
+		semaphores.push_back(std::make_shared<Semaphore>());
 	}
+
 
 	std::pair<std::vector<float>, vertexFormat > sphere = Load3DModelFromObjFile(prefix+"Data/Models/sphere.obj", true, false, false, true);
 	Geometry::Mesh_t* sphere_mesh = new Geometry::Mesh<Geometry::TRIANGLE>(sphere.first, sphere.second);
@@ -252,7 +255,7 @@ int main() {
 		commandBuffer[f].beginRecord();
 
 		const SwapChainImage& image = s->acquireImage();
-		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
+		std::vector<waitSemaphoreInfo> wait_semaphore_infos = {};
 		wait_semaphore_infos.push_back({
 			image.getSemaphore(),																	// VkSemaphore            Semaphore
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
@@ -272,10 +275,10 @@ int main() {
 		commandBuffer[f].endRecord();
 
 
-		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(0) });
+		commandBuffer[f].submit(queue, wait_semaphore_infos, { semaphores[f] });
 		
 
-		s->presentImage(presentQueue, image, { commandBuffer[f].getSemaphore(0) });
+		s->presentImage(presentQueue, image, { semaphores[f] });
 	}
 
 	d->waitForAllCommands();

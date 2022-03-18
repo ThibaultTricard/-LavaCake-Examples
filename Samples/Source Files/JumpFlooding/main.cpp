@@ -32,7 +32,7 @@ int main() {
 	ComputeQueue computeQueue = d->getComputeQueue(0);
 	PresentationQueue presentQueue = d->getPresentQueue();
 	CommandBuffer cmbBuff;
-	cmbBuff.addSemaphore();
+	std::shared_ptr<Semaphore> semaphore = std::make_shared<Semaphore>();
 
 	ComputePipeline* jumpFloodPipeline = new ComputePipeline();
 	VkExtent2D size = s->size();
@@ -167,7 +167,7 @@ int main() {
 		pass++;
 		const SwapChainImage& image = s->acquireImage();
 
-		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
+		std::vector<waitSemaphoreInfo> wait_semaphore_infos = {};
 		wait_semaphore_infos.push_back({
 			image.getSemaphore(),                     // VkSemaphore            Semaphore
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
@@ -187,10 +187,10 @@ int main() {
 
 		cmbBuff.endRecord();
 
-		cmbBuff.submit(graphicQueue, wait_semaphore_infos, { cmbBuff.getSemaphore(0) });
+		cmbBuff.submit(graphicQueue, wait_semaphore_infos, { semaphore });
 		
 
-		s->presentImage(presentQueue, image, { cmbBuff.getSemaphore(0) });
+		s->presentImage(presentQueue, image, { semaphore });
 #ifdef _WIN32
 		Sleep(500);
 #endif
