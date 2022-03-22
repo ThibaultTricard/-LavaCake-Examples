@@ -1,8 +1,7 @@
 #define LAVACAKE_WINDOW_MANAGER_GLFW
-#include "Framework/Framework.h"
-#include "AllHeaders.h"
-#include "Common.h"
-#include "Geometry/meshLoader.h"
+
+#include <LavaCake/Framework/Framework.h>
+#include <LavaCake/Geometry/meshLoader.h>
 
 using namespace LavaCake;
 using namespace LavaCake::Geometry;

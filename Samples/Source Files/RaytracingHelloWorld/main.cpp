@@ -1,7 +1,7 @@
 #define LAVACAKE_WINDOW_MANAGER_GLFW
-#include "Framework/Framework.h"
-#include "RayTracing/RayTracingPipeline.h"
-#include "RayTracing/BottomLevelAS.h"
+
+#include <LavaCake/Framework/Framework.h>
+#include <LavaCake/RayTracing/RayTracingPipeline.h>
 
 using namespace LavaCake;
 using namespace LavaCake::Geometry;

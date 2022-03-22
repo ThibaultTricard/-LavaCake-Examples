@@ -1,6 +1,7 @@
 #define LAVACAKE_WINDOW_MANAGER_GLFW
-#include "Framework/Framework.h"
-#include "Geometry/meshLoader.h"
+
+#include <LavaCake/Framework/Framework.h> 
+#include <LavaCake/Geometry/meshLoader.h> 
 
 using namespace LavaCake;
 using namespace LavaCake::Geometry;
@@ -49,13 +50,13 @@ int main() {
 	vec3f camera = vec3f({0.0f,0.0f,4.0f});
 
 	//knot mesh
-	std::pair<std::vector<float>, Geometry::vertexFormat > knot = Geometry::Load3DModelFromObjFile(prefix+"Data/Models/knot.obj", true, false, false , true);
-	Geometry::Mesh_t* knot_mesh = new Geometry::Mesh<Geometry::TRIANGLE>(knot.first, knot.second);
+	std::pair<std::vector<float>, vertexFormat > knot = Load3DModelFromObjFile(prefix+"Data/Models/knot.obj", true, false, false , true);
+	Mesh_t* knot_mesh = new Mesh<TRIANGLE>(knot.first, knot.second);
 
 
 	//plane mesh
-	std::pair<std::vector<float>, Geometry::vertexFormat > plane = Geometry::Load3DModelFromObjFile(prefix+"Data/Models/plane.obj", true, false, false, false);
-	Geometry::Mesh_t* plane_mesh = new Geometry::Mesh<Geometry::TRIANGLE>(plane.first, plane.second);
+	std::pair<std::vector<float>, vertexFormat > plane = Load3DModelFromObjFile(prefix+"Data/Models/plane.obj", true, false, false, false);
+	Mesh_t* plane_mesh = new Mesh<TRIANGLE>(plane.first, plane.second);
 
 	
 
@@ -66,7 +67,7 @@ int main() {
 
 
 	//PostProcessQuad
-	Geometry::Mesh_t* quad = new Geometry::IndexedMesh<Geometry::TRIANGLE>(Geometry::P3UV);
+	Mesh_t* quad = new IndexedMesh<Geometry::TRIANGLE>(Geometry::P3UV);
 	
 	quad->appendVertex({ -1.0,-1.0,0.0,0.0,0.0 });
 	quad->appendVertex({ -1.0, 1.0,0.0,0.0,1.0 });

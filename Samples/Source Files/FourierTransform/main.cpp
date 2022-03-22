@@ -1,5 +1,5 @@
 #define LAVACAKE_WINDOW_MANAGER_GLFW
-#include "Framework/Framework.h"
+#include <LavaCake/Framework/Framework.h> 
 
 
 using namespace LavaCake;
