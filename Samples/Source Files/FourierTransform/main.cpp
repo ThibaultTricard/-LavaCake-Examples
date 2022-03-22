@@ -1,5 +1,5 @@
 #define LAVACAKE_WINDOW_MANAGER_GLFW
-#include "Framework/Framework.h"
+#include <LavaCake/Framework/Framework.h> 
 
 
 using namespace LavaCake;
@@ -14,8 +14,7 @@ std::string prefix ="";
 #endif
 
 int main() {
-	ErrorCheck::PrintError(true, 2);
-	int nbFrames = 3;
+	ErrorCheck::printError(true, 2);
 
 	glfwInit();
 
@@ -27,22 +26,21 @@ int main() {
 
 	Framework::Device* d = Framework::Device::getDevice();
 	d->initDevices(1, 1, surfaceInitialisator);
-	LavaCake::Framework::SwapChain* s = LavaCake::Framework::SwapChain::getSwapChain();
+	SwapChain* s = SwapChain::getSwapChain();
 	s->init();
 
-	Queue* queue = d->getGraphicQueue(0);
-	PresentationQueue* presentQueue = d->getPresentQueue();
+	GraphicQueue queue = d->getGraphicQueue(0);
+	PresentationQueue presentQueue = d->getPresentQueue();
 
-	Queue* compute_queue = d->getComputeQueue(0);
+	ComputeQueue compute_queue = d->getComputeQueue(0);
 
 	VkDevice logical = d->getLogicalDevice();
 	VkExtent2D size = s->size();
 
-	std::vector<Framework::CommandBuffer> commandBuffer = std::vector<Framework::CommandBuffer>(nbFrames);
-	for (int i = 0; i < nbFrames; i++) {
-		commandBuffer[i].addSemaphore();
-		commandBuffer[i].addSemaphore();
-	}
+	CommandBuffer commandBuffer;
+
+	std::shared_ptr<Semaphore> s1 = std::make_shared<Semaphore>();
+
 
 	//PostProcessQuad
 	Geometry::Mesh_t* quad = new Geometry::IndexedMesh<Geometry::TRIANGLE>(Geometry::P3UV);
@@ -60,29 +58,27 @@ int main() {
 	quad->appendIndex(3);
 	quad->appendIndex(0);
 
-	Framework::VertexBuffer* quad_vertex_buffer = new Framework::VertexBuffer({ quad });
-	quad_vertex_buffer->allocate(queue, commandBuffer[0]);
+	Framework::VertexBuffer* quad_vertex_buffer = new Framework::VertexBuffer(queue, commandBuffer, { quad });
 
 	//texture map
-	Framework::Image* input = createTextureBuffer(queue, commandBuffer[0], prefix+"Data/Textures/auxetic_x5.jpg", 4);
+	Image  input = createTextureBuffer(queue, commandBuffer, prefix+"Data/Textures/mandrill.png", 4);
 
 
-	Framework::Buffer* output_pass1 = new Framework::Buffer();
-	std::vector<float> rawdata = std::vector<float>(input->width() * input->height() * uint32_t(2));
-	output_pass1->allocate(queue, commandBuffer[0],rawdata, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT);
+	
+	std::vector<float> rawdata = std::vector<float>(input.width() * input.height() * uint32_t(2));
+	Buffer output_pass1(queue, commandBuffer, rawdata, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT);
 
-	Framework::Buffer* output_pass2 = new Framework::Buffer();
-	output_pass2->allocate(queue, commandBuffer[0], rawdata, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT);
+	Buffer output_pass2(queue, commandBuffer, rawdata, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT);
 
-	Framework::UniformBuffer* sizeBuffer = new Framework::UniformBuffer();
-	sizeBuffer->addVariable("width", input->width());
-	sizeBuffer->addVariable("height", input->height());
-	sizeBuffer->end();
+	UniformBuffer sizeBuffer;
+	sizeBuffer.addVariable("width", input.width());
+	sizeBuffer.addVariable("height", input.height());
+	sizeBuffer.end();
 
 	//pass1 
 	Framework::ComputePipeline* computePipeline1 = new Framework::ComputePipeline();
 
-	Framework::ComputeShaderModule* computeFourier1 = new Framework::ComputeShaderModule(prefix+"Data/Shaders/FourierTransform/fourier_pass1.comp.spv");
+	ComputeShaderModule computeFourier1(prefix+"Data/Shaders/FourierTransform/fourier_pass1.comp.spv");
 	computePipeline1->setComputeModule(computeFourier1);
 
 	computePipeline1->addTextureBuffer(input, VK_SHADER_STAGE_COMPUTE_BIT, 0);
@@ -94,7 +90,7 @@ int main() {
 	//pass2
 	Framework::ComputePipeline* computePipeline2 = new Framework::ComputePipeline();
 
-	Framework::ComputeShaderModule* computeFourier2 = new Framework::ComputeShaderModule(prefix+"Data/Shaders/FourierTransform/fourier_pass2.comp.spv");
+	ComputeShaderModule computeFourier2(prefix+"Data/Shaders/FourierTransform/fourier_pass2.comp.spv");
 	computePipeline2->setComputeModule(computeFourier2);
 
 	computePipeline2->addTexelBuffer(output_pass1, VK_SHADER_STAGE_COMPUTE_BIT, 0);
@@ -107,9 +103,9 @@ int main() {
 	//renderPass
 	Framework::RenderPass* showPass = new Framework::RenderPass();
 
-	Framework::GraphicPipeline* pipeline = new Framework::GraphicPipeline(vec3f({ 0,0,0 }) , vec3f({ float(size.width),float(size.height),1.0f }) , vec2f({ 0,0 }) , vec2f({ float(size.width),float(size.height) }));
-	Framework::VertexShaderModule* vertexShader = new Framework::VertexShaderModule(prefix+"Data/Shaders/FourierTransform/shader.vert.spv");
-	Framework::FragmentShaderModule* fragmentShader = new Framework::FragmentShaderModule(prefix+"Data/Shaders/FourierTransform/shader.frag.spv");
+	std::shared_ptr < GraphicPipeline > pipeline = std::make_shared < GraphicPipeline >(vec3f({ 0,0,0 }) , vec3f({ float(size.width),float(size.height),1.0f }) , vec2f({ 0,0 }) , vec2f({ float(size.width),float(size.height) }));
+	VertexShaderModule vertexShader(prefix+"Data/Shaders/FourierTransform/shader.vert.spv");
+	FragmentShaderModule fragmentShader(prefix+"Data/Shaders/FourierTransform/shader.frag.spv");
 	pipeline->setVertexModule(vertexShader);
 	pipeline->setFragmentModule(fragmentShader);
 	pipeline->setVerticesInfo(quad_vertex_buffer->getBindingDescriptions(), quad_vertex_buffer->getAttributeDescriptions(), quad_vertex_buffer->primitiveTopology());
@@ -130,64 +126,57 @@ int main() {
 
 
 
-	std::vector<Framework::FrameBuffer*> frameBuffers;
-	for (int i = 0; i < nbFrames; i++) {
-		frameBuffers.push_back(new Framework::FrameBuffer(s->size().width, s->size().height));
-		showPass->prepareOutputFrameBuffer(queue, commandBuffer[0], *frameBuffers[i]);
-	}
+	Framework::FrameBuffer frameBuffers(s->size().width, s->size().height);
 
+	showPass->prepareOutputFrameBuffer(queue, commandBuffer, frameBuffers);
+	
 
-	commandBuffer[0].wait(2000000000);
-	commandBuffer[0].resetFence();
-	commandBuffer[0].beginRecord();
+	commandBuffer.wait(2000000000);
+	commandBuffer.resetFence();
+	commandBuffer.beginRecord();
 
-	sizeBuffer->update(commandBuffer[0]);
+	sizeBuffer.update(commandBuffer);
 
-	computePipeline1->compute(commandBuffer[0], input->width(), input->height(), 1);
+	computePipeline1->compute(commandBuffer, input.width(), input.height(), 1);
 
 	
-	computePipeline2->compute(commandBuffer[0], input->width(), input->height(), 1);
+	computePipeline2->compute(commandBuffer, input.width(), input.height(), 1);
 
 
-	commandBuffer[0].endRecord();
+	commandBuffer.endRecord();
 
-	commandBuffer[0].submit(compute_queue, {}, { commandBuffer[0].getSemaphore(1) });
-
-
+	commandBuffer.submit(compute_queue, {}, { });
 
 
-	int f = 0;
+
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
-		f++;
-		f = f % nbFrames;
 
+		const SwapChainImage& image = s->acquireImage();
 
-		Framework::SwapChainImage& image = s->acquireImage();
-
-		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
+		std::vector<waitSemaphoreInfo> wait_semaphore_infos = {};
 		wait_semaphore_infos.push_back({
 			image.getSemaphore(),                     // VkSemaphore            Semaphore
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
 			});
 
 
-		commandBuffer[f].wait(2000000000);
-		commandBuffer[f].resetFence();
-		commandBuffer[f].beginRecord();
+		commandBuffer.wait(2000000000);
+		commandBuffer.resetFence();
+		commandBuffer.beginRecord();
 
 
-		showPass->setSwapChainImage(*frameBuffers[f], image);
+		showPass->setSwapChainImage(frameBuffers, image);
 
 
-		showPass->draw(commandBuffer[f], *frameBuffers[f], vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
+		showPass->draw(commandBuffer, frameBuffers, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
 
-		commandBuffer[f].endRecord();
+		commandBuffer.endRecord();
 
-		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(0) });
+		commandBuffer.submit(queue, wait_semaphore_infos, { s1 });
 		
 
-		s->presentImage(presentQueue, image, { commandBuffer[f].getSemaphore(0) });
+		s->presentImage(presentQueue, image, { s1 });
 	}
 
 	d->waitForAllCommands();

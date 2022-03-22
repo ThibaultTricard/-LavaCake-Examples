@@ -1,6 +1,7 @@
 #define LAVACAKE_WINDOW_MANAGER_GLFW
-#include "Framework/Framework.h"
-#include "Geometry/meshLoader.h"
+
+#include <LavaCake/Framework/Framework.h> 
+#include <LavaCake/Geometry/meshLoader.h> 
 
 using namespace LavaCake;
 using namespace LavaCake::Geometry;
@@ -15,7 +16,7 @@ std::string prefix ="";
 
 int main() {
 	uint32_t nbFrames = 1;
-	ErrorCheck::PrintError(true);
+	ErrorCheck::printError(true);
 
 
 	glfwInit();
@@ -32,41 +33,41 @@ int main() {
 	SwapChain* s = SwapChain::getSwapChain();
 	s->init();
 
-	Queue* queue = d->getGraphicQueue(0);
-	PresentationQueue* present_queue = d->getPresentQueue();
+	GraphicQueue queue = d->getGraphicQueue(0);
+	PresentationQueue present_queue = d->getPresentQueue();
 	std::vector<CommandBuffer> commandBuffer = std::vector<CommandBuffer>(nbFrames);
+
+	std::vector < std::shared_ptr<Semaphore> > semaphores;
 	VkExtent2D size = s->size();
 
 
 	CommandBuffer allocBuff;
 
 	for (uint32_t i = 0; i < nbFrames; i++) {
-		commandBuffer[i].addSemaphore();
+		semaphores.push_back(std::make_shared<Semaphore>());
 	}
 
 	vec3f camera = vec3f({0.0f,0.0f,4.0f});
 
 	//knot mesh
-	std::pair<std::vector<float>, Geometry::vertexFormat > knot = Geometry::Load3DModelFromObjFile(prefix+"Data/Models/knot.obj", true, false, false , true);
-	Geometry::Mesh_t* knot_mesh = new Geometry::Mesh<Geometry::TRIANGLE>(knot.first, knot.second);
+	std::pair<std::vector<float>, vertexFormat > knot = Load3DModelFromObjFile(prefix+"Data/Models/knot.obj", true, false, false , true);
+	Mesh_t* knot_mesh = new Mesh<TRIANGLE>(knot.first, knot.second);
 
 
 	//plane mesh
-	std::pair<std::vector<float>, Geometry::vertexFormat > plane = Geometry::Load3DModelFromObjFile(prefix+"Data/Models/plane.obj", true, false, false, false);
-	Geometry::Mesh_t* plane_mesh = new Geometry::Mesh<Geometry::TRIANGLE>(plane.first, plane.second);
+	std::pair<std::vector<float>, vertexFormat > plane = Load3DModelFromObjFile(prefix+"Data/Models/plane.obj", true, false, false, false);
+	Mesh_t* plane_mesh = new Mesh<TRIANGLE>(plane.first, plane.second);
 
 	
 
 
-	VertexBuffer* scene_vertex_buffer = new VertexBuffer({ plane_mesh, knot_mesh  });
-	scene_vertex_buffer->allocate(queue, allocBuff);
+	VertexBuffer* scene_vertex_buffer = new VertexBuffer(queue, allocBuff, { plane_mesh, knot_mesh  });
 
-	VertexBuffer* plane_buffer = new VertexBuffer({ plane_mesh });
-	plane_buffer->allocate(queue, allocBuff);
+	VertexBuffer* plane_buffer = new VertexBuffer(queue, allocBuff, { plane_mesh });
 
 
 	//PostProcessQuad
-	Geometry::Mesh_t* quad = new Geometry::IndexedMesh<Geometry::TRIANGLE>(Geometry::P3UV);
+	Mesh_t* quad = new IndexedMesh<Geometry::TRIANGLE>(Geometry::P3UV);
 	
 	quad->appendVertex({ -1.0,-1.0,0.0,0.0,0.0 });
 	quad->appendVertex({ -1.0, 1.0,0.0,0.0,1.0 });
@@ -81,21 +82,20 @@ int main() {
 	quad->appendIndex(3);
 	quad->appendIndex(0);              
 	
-	VertexBuffer* quad_vertex_buffer = new VertexBuffer({ quad });
-	quad_vertex_buffer->allocate(queue, commandBuffer[0]);
+	VertexBuffer* quad_vertex_buffer = new VertexBuffer(queue, commandBuffer[0], { quad });
 
 	//uniform buffer
 	uint32_t shadowsize = 64;
 
-	UniformBuffer* b = new UniformBuffer();
+	UniformBuffer b;
 	mat4 proj = PreparePerspectiveProjectionMatrix(static_cast<float>(shadowsize) / static_cast<float>(shadowsize),
 		50.0f, 0.5f, 10.0f);
 	mat4 modelView = mat4 ({ 0.9981f, -0.0450f, 0.0412f, 0.0000f, 0.0000f, 0.6756f, 0.7373f, 0.0000f, -0.0610f, -0.7359f, 0.6743f, 0.0000f, -0.0000f, -0.0000f, -4.0000f, 1.0000f });
 	mat4 lightView = mat4({ 1.0f,0.0f,0.0f,0.0f,0.0f,0.173648223f ,0.984807730f,0.0f,0.0f, -0.984807730f, 0.173648223f ,0.0f,0.0f,0.0f,-3.99999976f ,1.0f });
-	b->addVariable("ligthView", lightView);
-	b->addVariable("modelView", modelView);
-	b->addVariable("projection", proj);
-	b->end();
+	b.addVariable("ligthView", lightView);
+	b.addVariable("modelView", modelView);
+	b.addVariable("projection", proj);
+	b.end();
 
 	//PushConstant
 	PushConstant* constant = new PushConstant();
@@ -104,16 +104,16 @@ int main() {
 
 
 	//DepthBuffer
-	FrameBuffer* shadow_map_buffer = new FrameBuffer(shadowsize, shadowsize);
+	FrameBuffer shadow_map_buffer(shadowsize, shadowsize);
 
 	//frameBuffer
-	FrameBuffer* scene_buffer = new FrameBuffer(shadowsize, shadowsize);
+	FrameBuffer scene_buffer(shadowsize, shadowsize);
 	
 	// Shadow pass
 	RenderPass shadowMapPass = RenderPass();
-	GraphicPipeline* shadowPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(shadowsize),float(shadowsize),1.0f }), vec2f({ 0,0 }), vec2f({ float(shadowsize),float(shadowsize) }));
+	std::shared_ptr<GraphicPipeline> shadowPipeline = std::make_shared<GraphicPipeline> (vec3f({ 0,0,0 }), vec3f({ float(shadowsize),float(shadowsize),1.0f }), vec2f({ 0,0 }), vec2f({ float(shadowsize),float(shadowsize) }));
 
-	VertexShaderModule* shadowVertex = new VertexShaderModule(prefix+"Data/Shaders/ConsoleRenderer/shadow.vert.spv");
+	VertexShaderModule shadowVertex(prefix+"Data/Shaders/ConsoleRenderer/shadow.vert.spv");
 	shadowPipeline->setVertexModule(shadowVertex);
 
 	shadowPipeline->setVerticesInfo(scene_vertex_buffer->getBindingDescriptions(), scene_vertex_buffer->getAttributeDescriptions(), scene_vertex_buffer->primitiveTopology());
@@ -131,15 +131,15 @@ int main() {
 	shadowMapPass.addDependencies(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 	shadowMapPass.compile();
 
-	shadowMapPass.prepareOutputFrameBuffer(queue, commandBuffer[0] ,*shadow_map_buffer);
+	shadowMapPass.prepareOutputFrameBuffer(queue, commandBuffer[0] ,shadow_map_buffer);
 
 	//Render Pass
 	RenderPass renderPass = RenderPass();
-	GraphicPipeline* renderPipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(shadowsize),float(shadowsize),1.0f }), vec2f({ 0,0 }), vec2f({ float(shadowsize),float(shadowsize) }));
-	VertexShaderModule* renderVertex = new VertexShaderModule(prefix+"Data/Shaders/ConsoleRenderer/scene.vert.spv");
+	std::shared_ptr<GraphicPipeline> renderPipeline = std::make_shared<GraphicPipeline>(vec3f({ 0,0,0 }), vec3f({ float(shadowsize),float(shadowsize),1.0f }), vec2f({ 0,0 }), vec2f({ float(shadowsize),float(shadowsize) }));
+	VertexShaderModule renderVertex(prefix+"Data/Shaders/ConsoleRenderer/scene.vert.spv");
 	renderPipeline->setVertexModule(renderVertex);
 
-	FragmentShaderModule* renderFrag = new FragmentShaderModule(prefix+"Data/Shaders/ConsoleRenderer/scene.frag.spv");
+	FragmentShaderModule renderFrag(prefix+"Data/Shaders/ConsoleRenderer/scene.frag.spv");
 	renderPipeline->setFragmentModule(renderFrag);
 
 	renderPipeline->setPushContantInfo({ { constant->size() ,VK_SHADER_STAGE_VERTEX_BIT } });
@@ -159,15 +159,15 @@ int main() {
 	//renderPass.addDependencies(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 	renderPass.compile();
 
-	renderPass.prepareOutputFrameBuffer(queue, commandBuffer[0] ,*scene_buffer);
+	renderPass.prepareOutputFrameBuffer(queue, commandBuffer[0] ,scene_buffer);
 
 	//Console Render pass
 	RenderPass consolePass = RenderPass();
-	GraphicPipeline* consolePipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
-	VertexShaderModule* consoleVertex = new VertexShaderModule(prefix+"Data/Shaders/ConsoleRenderer/console.vert.spv");
+	std::shared_ptr<GraphicPipeline> consolePipeline = std::make_shared<GraphicPipeline>(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
+	VertexShaderModule consoleVertex(prefix+"Data/Shaders/ConsoleRenderer/console.vert.spv");
 	consolePipeline->setVertexModule(consoleVertex);
 
-	FragmentShaderModule* consoleFrag = new FragmentShaderModule(prefix+"Data/Shaders/ConsoleRenderer/console.frag.spv");
+	FragmentShaderModule consoleFrag(prefix+"Data/Shaders/ConsoleRenderer/console.frag.spv");
 	consolePipeline->setFragmentModule(consoleFrag);
 
 	consolePipeline->setVerticesInfo(quad_vertex_buffer->getBindingDescriptions(), quad_vertex_buffer->getAttributeDescriptions(), quad_vertex_buffer->primitiveTopology());
@@ -209,11 +209,10 @@ int main() {
 		f = f % nbFrames;
 		
 		VkDevice logical = d->getLogicalDevice();
-		VkSwapchainKHR& swapchain = s->getHandle();
 		
-		SwapChainImage& image = s->acquireImage();
+		const SwapChainImage& image = s->acquireImage();
 
-		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
+		std::vector<waitSemaphoreInfo> wait_semaphore_infos = {};
 		wait_semaphore_infos.push_back({
 			image.getSemaphore(),                     // VkSemaphore            Semaphore
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
@@ -223,7 +222,6 @@ int main() {
 		int state = glfwGetKey(window, GLFW_KEY_SPACE);
     if (state == GLFW_PRESS) {
 			d->waitForAllCommands();
-			consolePass.reloadShaders();
 		}
 
 
@@ -255,23 +253,23 @@ int main() {
 
 
 		if (updateUniformBuffer) {
-			b->update(commandBuffer[f]);
+			b.update(commandBuffer[f]);
 			updateUniformBuffer = false;
 		}
 
-		shadowMapPass.draw(commandBuffer[f], *shadow_map_buffer, vec2u({ 0,0 }), vec2u({shadowsize, shadowsize }));
+		shadowMapPass.draw(commandBuffer[f], shadow_map_buffer, vec2u({ 0,0 }), vec2u({shadowsize, shadowsize }));
 
-		renderPass.draw(commandBuffer[f], *scene_buffer, vec2u({ 0,0 }), scene_buffer->size(), { { 0.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 0 } });
+		renderPass.draw(commandBuffer[f], scene_buffer, vec2u({ 0,0 }), scene_buffer.size(), { { 0.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 0 } });
 
 		consolePass.setSwapChainImage(*frameBuffers[f], image);
 		consolePass.draw(commandBuffer[f], *frameBuffers[f], vec2u({ 0,0 }), vec2u({size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
 
 		commandBuffer[f].endRecord();
 
-		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(0) });
+		commandBuffer[f].submit(queue, wait_semaphore_infos, { semaphores[f]});
 	
 
-    s->presentImage(present_queue, image, { commandBuffer[f].getSemaphore(0) });
+    s->presentImage(present_queue, image, { semaphores[f] });
 		
 
 	}

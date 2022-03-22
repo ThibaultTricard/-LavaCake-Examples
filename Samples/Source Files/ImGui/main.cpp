@@ -1,5 +1,5 @@
 #define LAVACAKE_WINDOW_MANAGER_GLFW
-#include "Framework/Framework.h"
+#include <LavaCake/Framework/Framework.h>
 
 using namespace LavaCake;
 using namespace LavaCake::Geometry;
@@ -22,24 +22,25 @@ int main() {
 
 	GLFWSurfaceInitialisator surfaceInitialisator(window);
 
-	ImGuiWrapper* gui = new ImGuiWrapper();
+	ErrorCheck::printError(true, 8);
 
 	int  debug = 0;
 
 	int nbFrames = 1;
 	LavaCake::Framework::Device* d = LavaCake::Framework::Device::getDevice();
 	d->initDevices(0, 1, surfaceInitialisator);
-	LavaCake::Framework::SwapChain* s = LavaCake::Framework::SwapChain::getSwapChain();
+	SwapChain* s = LavaCake::Framework::SwapChain::getSwapChain();
 	s->init(); 
 	VkExtent2D size = s->size();
-	Queue* queue = d->getGraphicQueue(0);
-	PresentationQueue* presentQueue = d->getPresentQueue();
+	GraphicQueue queue = d->getGraphicQueue(0);
+	PresentationQueue presentQueue = d->getPresentQueue();
 	std::vector<CommandBuffer> commandBuffer = std::vector<CommandBuffer>(nbFrames);
+	std::vector<std::shared_ptr<Semaphore>> semaphores;
 	for (int i = 0; i < nbFrames; i++) {
-		commandBuffer[i].addSemaphore();
+		semaphores.push_back(std::make_shared<Semaphore>());
 	}
+	ImGuiWrapper* gui = new ImGuiWrapper(d->getGraphicQueue(0), commandBuffer[0], vec2i({ 512 ,512 }), vec2i({ (int)size.width ,(int)size.height }));
 
-	gui->initGui(d->getGraphicQueue(0), commandBuffer[0], vec2i({ 512 ,512 }), vec2i({(int)size.width ,(int)size.height}) );
 	prepareInputs(window);
 
 	Mesh_t* triangle = new Mesh<TRIANGLE>(LavaCake::Geometry::PC3);
@@ -47,14 +48,13 @@ int main() {
 	triangle->appendVertex({ 0.75f,	0.75f , 0.0f,  0.0f	, 1.0f	, 0.0f });
 	triangle->appendVertex({ 0.0f , -0.75f, 0.0f, 0.0f	, 0.0f	, 1.0f });
 
-	VertexBuffer* triangle_vertex_buffer = new VertexBuffer({ triangle });
-	triangle_vertex_buffer->allocate(queue, commandBuffer[0]);
+	VertexBuffer* triangle_vertex_buffer = new VertexBuffer(queue, commandBuffer[0],{ triangle });
 
 	RenderPass* pass = new RenderPass();
-	GraphicPipeline* pipeline = new GraphicPipeline(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
+	std::shared_ptr < GraphicPipeline > pipeline = std::make_shared < GraphicPipeline >(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
-    VertexShaderModule* vertexShader = new VertexShaderModule(prefix+"Data/Shaders/helloworld/shader.vert.spv");
-	FragmentShaderModule* fragmentShader = new FragmentShaderModule(prefix+"Data/Shaders/helloworld/shader.frag.spv");
+  VertexShaderModule vertexShader = VertexShaderModule(prefix+"Data/Shaders/helloworld/shader.vert.spv");
+	FragmentShaderModule fragmentShader = FragmentShaderModule(prefix+"Data/Shaders/helloworld/shader.frag.spv");
 
 
 	pipeline->setVertexModule(vertexShader);
@@ -72,7 +72,7 @@ int main() {
 	SA.useDepth = true;
 	SA.showOnScreenIndex = 0;
 
-	pass->addSubPass({ pipeline, gui->getPipeline() }, SA);
+	pass->addSubPass({ pipeline, gui->getPipeline()}, SA);
 	pass->addDependencies(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 	pass->addDependencies(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 
@@ -154,15 +154,14 @@ int main() {
 		
 		
 		VkDevice logical = d->getLogicalDevice();
-		VkSwapchainKHR& swapchain = s->getHandle();
-		SwapChainImage& image = s->acquireImage();
+		const SwapChainImage& image = s->acquireImage();
 
 
 	
 
 
 
-		std::vector<WaitSemaphoreInfo> wait_semaphore_infos = {};
+		std::vector<waitSemaphoreInfo> wait_semaphore_infos = {};
 		wait_semaphore_infos.push_back({
 			image.getSemaphore(),                     // VkSemaphore            Semaphore
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
@@ -181,13 +180,13 @@ int main() {
 
 		commandBuffer[f].endRecord();
 
-		commandBuffer[f].submit(queue, wait_semaphore_infos, { commandBuffer[f].getSemaphore(0) });
+		commandBuffer[f].submit(queue, wait_semaphore_infos, { semaphores[f] });
 		
 
-		s->presentImage(presentQueue, image, { commandBuffer[f].getSemaphore(0) });
+		s->presentImage(presentQueue, image, { semaphores[f] });
 
 		debug++;
 	}
-	d->end();
+	d->waitForAllCommands();
 	
 }

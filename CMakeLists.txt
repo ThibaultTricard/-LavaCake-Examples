@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
+
 add_subdirectory(LavaCake)
 
 ###############################################################
@@ -14,29 +15,141 @@ add_subdirectory(LavaCake)
 
 file( COPY "${CMAKE_CURRENT_LIST_DIR}/Samples/Data" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}" )
 
-# Sample projects generation
-macro( list_samples )
-		file( GLOB SAMPLES RELATIVE "${CMAKE_CURRENT_LIST_DIR}/Samples/Source Files" "${CMAKE_CURRENT_LIST_DIR}/Samples/Source Files/*" )	
-		FOREACH( SAMPLE ${SAMPLES} )
-			IF(NOT ${SAMPLE} MATCHES ".DS_Store")
 
-				file( GLOB SAMPLE_SOURCE_FILES "Samples/Source Files/${SAMPLE}/*.cpp" )
-				source_group( "" FILES ${SAMPLE_SOURCE_FILES} )
+#Console renderer
 
-				clearShader()
-				file( GLOB SHADER_SOURCE_FILES "Samples/Data/Shaders/${SAMPLE}/*")
-				FOREACH( shader ${SHADER_SOURCE_FILES} )
-					string(REGEX MATCH "[A-Za-z0-9_\\-]*\\.[A-Za-z0-9]*" FILENAME ${shader})
-					addShader(${shader} ${CMAKE_CURRENT_BINARY_DIR}/Data/Shaders/${SAMPLE}/${FILENAME}.spv spv1.3)
-				endforeach()
-				add_executable( ${SAMPLE} ${SAMPLE_SOURCE_FILES} )
-				AutoSPIRV(${SAMPLE})
-				target_link_libraries( ${SAMPLE} LavaCake )
-				set_property( TARGET ${SAMPLE} PROPERTY FOLDER "Samples" )
-			ENDIF()
-		ENDFOREACH()
-endmacro()
+clearShader()
+file( GLOB SHADER_SOURCE_FILES "Samples/Data/Shaders/ConsoleRenderer/*")
+FOREACH( shader ${SHADER_SOURCE_FILES} )
+	string(REGEX MATCH "[A-Za-z0-9_\\-]*\\.[A-Za-z0-9]*" FILENAME ${shader})
+	addShader(${shader} ${CMAKE_CURRENT_BINARY_DIR}/Data/Shaders/ConsoleRenderer/${FILENAME}.spv spv1.3)
+endforeach()
+add_executable( ConsoleRenderer  "Samples/Source Files/ConsoleRenderer/main.cpp")
+AutoSPIRV(ConsoleRenderer)
+target_link_libraries( ConsoleRenderer LavaCake )
+set_property( TARGET ConsoleRenderer PROPERTY FOLDER "Samples" )
 
-# Sample projects generation
-list_samples()
+
+#Fourier Transform
+clearShader()
+file( GLOB SHADER_SOURCE_FILES "Samples/Data/Shaders/FourierTransform/*")
+FOREACH( shader ${SHADER_SOURCE_FILES} )
+	string(REGEX MATCH "[A-Za-z0-9_\\-]*\\.[A-Za-z0-9]*" FILENAME ${shader})
+	addShader(${shader} ${CMAKE_CURRENT_BINARY_DIR}/Data/Shaders/FourierTransform/${FILENAME}.spv spv1.3)
+endforeach()
+add_executable( FourierTransform  "Samples/Source Files/FourierTransform/main.cpp")
+AutoSPIRV(FourierTransform)
+target_link_libraries( FourierTransform LavaCake )
+set_property( TARGET FourierTransform PROPERTY FOLDER "Samples" )
+
+
+
+#Hello World
+clearShader()
+file( GLOB SHADER_SOURCE_FILES "Samples/Data/Shaders/HelloWorld/*")
+FOREACH( shader ${SHADER_SOURCE_FILES} )
+	string(REGEX MATCH "[A-Za-z0-9_\\-]*\\.[A-Za-z0-9]*" FILENAME ${shader})
+	addShader(${shader} ${CMAKE_CURRENT_BINARY_DIR}/Data/Shaders/HelloWorld/${FILENAME}.spv spv1.3)
+endforeach()
+add_executable( HelloWorld  "Samples/Source Files/HelloWorld/main.cpp")
+AutoSPIRV(HelloWorld)
+target_link_libraries( HelloWorld LavaCake )
+set_property( TARGET HelloWorld PROPERTY FOLDER "Samples" )
+
+
+#ImGui
+clearShader()
+file( GLOB SHADER_SOURCE_FILES "Samples/Data/Shaders/ImGui/*")
+FOREACH( shader ${SHADER_SOURCE_FILES} )
+	string(REGEX MATCH "[A-Za-z0-9_\\-]*\\.[A-Za-z0-9]*" FILENAME ${shader})
+	addShader(${shader} ${CMAKE_CURRENT_BINARY_DIR}/Data/Shaders/ImGui/${FILENAME}.spv spv1.3)
+endforeach()
+add_executable( ImGui  "Samples/Source Files/ImGui/main.cpp")
+AutoSPIRV(ImGui)
+target_link_libraries( ImGui LavaCake )
+set_property( TARGET ImGui PROPERTY FOLDER "Samples" )
+
+
+#Instancing
+clearShader()
+file( GLOB SHADER_SOURCE_FILES "Samples/Data/Shaders/Instancing/*")
+FOREACH( shader ${SHADER_SOURCE_FILES} )
+	string(REGEX MATCH "[A-Za-z0-9_\\-]*\\.[A-Za-z0-9]*" FILENAME ${shader})
+	addShader(${shader} ${CMAKE_CURRENT_BINARY_DIR}/Data/Shaders/Instancing/${FILENAME}.spv spv1.3)
+endforeach()
+add_executable( Instancing  "Samples/Source Files/Instancing/main.cpp")
+AutoSPIRV(Instancing)
+target_link_libraries( Instancing LavaCake )
+set_property( TARGET Instancing PROPERTY FOLDER "Samples" )
+
+
+#JumpFlooding
+clearShader()
+file( GLOB SHADER_SOURCE_FILES "Samples/Data/Shaders/JumpFlooding/*")
+FOREACH( shader ${SHADER_SOURCE_FILES} )
+	string(REGEX MATCH "[A-Za-z0-9_\\-]*\\.[A-Za-z0-9]*" FILENAME ${shader})
+	addShader(${shader} ${CMAKE_CURRENT_BINARY_DIR}/Data/Shaders/JumpFlooding/${FILENAME}.spv spv1.3)
+endforeach()
+add_executable( JumpFlooding  "Samples/Source Files/JumpFlooding/main.cpp")
+AutoSPIRV(JumpFlooding)
+target_link_libraries( JumpFlooding LavaCake )
+set_property( TARGET JumpFlooding PROPERTY FOLDER "Samples" )
+
+
+#postProcess
+clearShader()
+file( GLOB SHADER_SOURCE_FILES "Samples/Data/Shaders/PostProcess/*")
+FOREACH( shader ${SHADER_SOURCE_FILES} )
+	string(REGEX MATCH "[A-Za-z0-9_\\-]*\\.[A-Za-z0-9]*" FILENAME ${shader})
+	addShader(${shader} ${CMAKE_CURRENT_BINARY_DIR}/Data/Shaders/PostProcess/${FILENAME}.spv spv1.3)
+endforeach()
+add_executable( PostProcess  "Samples/Source Files/PostProcess/main.cpp")
+AutoSPIRV(PostProcess)
+target_link_libraries( PostProcess LavaCake )
+set_property( TARGET PostProcess PROPERTY FOLDER "Samples" )
+
+
+#SSAO
+clearShader()
+file( GLOB SHADER_SOURCE_FILES "Samples/Data/Shaders/SSAO/*")
+FOREACH( shader ${SHADER_SOURCE_FILES} )
+	string(REGEX MATCH "[A-Za-z0-9_\\-]*\\.[A-Za-z0-9]*" FILENAME SSAO/${shader})
+	addShader(${shader} ${CMAKE_CURRENT_BINARY_DIR}/Data/Shaders/SSAO/${FILENAME}.spv spv1.3)
+endforeach()
+add_executable( SSAO  "Samples/Source Files/SSAO/main.cpp")
+AutoSPIRV(SSAO)
+target_link_libraries( SSAO LavaCake )
+set_property( TARGET SSAO PROPERTY FOLDER "Samples" )
+
+option(BUILD_RAYTRACING_EXAMPLE "Build the raytracing example" off)
+
+
+#RT Hello World
+
+if(BUILD_RAYTRACING_EXAMPLE)
+clearShader()
+file( GLOB SHADER_SOURCE_FILES "Samples/Data/Shaders/RaytracingHelloWorld/*")
+FOREACH( shader ${SHADER_SOURCE_FILES} )
+	string(REGEX MATCH "[A-Za-z0-9_\\-]*\\.[A-Za-z0-9]*" FILENAME RaytracingHelloWorld/${shader})
+	addShader(${shader} ${CMAKE_CURRENT_BINARY_DIR}/Data/Shaders/RaytracingHelloWorld/${FILENAME}.spv spv1.4)
+endforeach()
+add_executable( RaytracingHelloWorld  "Samples/Source Files/RaytracingHelloWorld/main.cpp")
+AutoSPIRV(RaytracingHelloWorld)
+target_link_libraries( RaytracingHelloWorld LavaCake )
+set_property( TARGET RaytracingHelloWorld PROPERTY FOLDER "Samples" )
+
+#RT Cornell box
+clearShader()
+file( GLOB SHADER_SOURCE_FILES "Samples/Data/Shaders/CornellBox/*")
+FOREACH( shader ${SHADER_SOURCE_FILES} )
+	string(REGEX MATCH "[A-Za-z0-9_\\-]*\\.[A-Za-z0-9]*" FILENAME CornellBox/${shader})
+	addShader(${shader} ${CMAKE_CURRENT_BINARY_DIR}/Data/Shaders/CornellBox/${FILENAME}.spv spv1.4)
+endforeach()
+add_executable( CornellBox  "Samples/Source Files/CornellBox/main.cpp")
+AutoSPIRV(CornellBox)
+target_link_libraries( CornellBox LavaCake )
+set_property( TARGET CornellBox PROPERTY FOLDER "Samples" )
+
+endif()
+
 
