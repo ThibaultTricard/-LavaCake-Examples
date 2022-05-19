@@ -43,7 +43,7 @@ int main() {
 
 
 	//PostProcessQuad
-	Geometry::Mesh_t* quad = new Geometry::IndexedMesh<Geometry::TRIANGLE>(Geometry::P3UV);
+	std::shared_ptr<Geometry::Mesh_t> quad = std::make_shared<Geometry::IndexedMesh<Geometry::TRIANGLE>>(Geometry::P3UV);
 
 	quad->appendVertex({ -1.0,-1.0,0.0,0.0,0.0 });
 	quad->appendVertex({ -1.0, 1.0,0.0,0.0,1.0 });
@@ -58,7 +58,8 @@ int main() {
 	quad->appendIndex(3);
 	quad->appendIndex(0);
 
-	Framework::VertexBuffer* quad_vertex_buffer = new Framework::VertexBuffer(queue, commandBuffer, { quad });
+	std::shared_ptr<VertexBuffer> quad_vertex_buffer = std::make_shared<Framework::VertexBuffer>(queue, commandBuffer, 
+		std::vector<std::shared_ptr<Mesh_t>>({ quad }));
 
 	//texture map
 	Image  input = createTextureBuffer(queue, commandBuffer, prefix+"Data/Textures/mandrill.png", 4);

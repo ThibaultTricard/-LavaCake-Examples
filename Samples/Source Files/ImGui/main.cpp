@@ -43,18 +43,23 @@ int main() {
 
 	prepareInputs(window);
 
-	Mesh_t* triangle = new Mesh<TRIANGLE>(LavaCake::Geometry::PC3);
+	std::shared_ptr<Mesh_t> triangle = std::make_shared<Mesh<TRIANGLE>>(LavaCake::Geometry::PC3);
 	triangle->appendVertex({ -0.75f, 0.75f , 0.0f, 1.0f	, 0.0f	, 0.0f });
 	triangle->appendVertex({ 0.75f,	0.75f , 0.0f,  0.0f	, 1.0f	, 0.0f });
 	triangle->appendVertex({ 0.0f , -0.75f, 0.0f, 0.0f	, 0.0f	, 1.0f });
 
-	VertexBuffer* triangle_vertex_buffer = new VertexBuffer(queue, commandBuffer[0],{ triangle });
+
+
+
+
+	std::shared_ptr<VertexBuffer> triangle_vertex_buffer = std::make_shared<VertexBuffer>(queue, commandBuffer[0],
+		std::vector<std::shared_ptr<Mesh_t>>( { triangle }));
 
 	RenderPass* pass = new RenderPass();
 	std::shared_ptr < GraphicPipeline > pipeline = std::make_shared < GraphicPipeline >(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
 
-  VertexShaderModule vertexShader = VertexShaderModule(prefix+"Data/Shaders/helloworld/shader.vert.spv");
-	FragmentShaderModule fragmentShader = FragmentShaderModule(prefix+"Data/Shaders/helloworld/shader.frag.spv");
+	VertexShaderModule vertexShader = VertexShaderModule(prefix+"Data/Shaders/ImGui/shader.vert.spv");
+	FragmentShaderModule fragmentShader = FragmentShaderModule(prefix+"Data/Shaders/ImGui/shader.frag.spv");
 
 
 	pipeline->setVertexModule(vertexShader);

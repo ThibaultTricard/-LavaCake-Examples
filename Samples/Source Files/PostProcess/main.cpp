@@ -43,22 +43,24 @@ int main() {
 
 
 	std::pair<std::vector<float>, vertexFormat > sphere = Load3DModelFromObjFile(prefix+"Data/Models/sphere.obj", true, false, false, true);
-	Geometry::Mesh_t* sphere_mesh = new Geometry::Mesh<Geometry::TRIANGLE>(sphere.first, sphere.second);
+	std::shared_ptr<Mesh_t> sphere_mesh = std::make_shared<Mesh<Geometry::TRIANGLE>>(sphere.first, sphere.second);
 
 	
 
-	VertexBuffer* sphere_vertex_buffer = new VertexBuffer(queue, commandBuffer[0],{ sphere_mesh });
+	std::shared_ptr<VertexBuffer> sphere_vertex_buffer = std::make_shared <VertexBuffer>(queue, commandBuffer[0],
+		std::vector<std::shared_ptr<Mesh_t>>( { sphere_mesh }));
 
 	//Skybox Data
 
 	std::pair<std::vector<float>, vertexFormat > sky = Load3DModelFromObjFile(prefix+"Data/Models/cube.obj", true, false, false, true);
-	Geometry::Mesh_t* sky_mesh = new Geometry::Mesh<Geometry::TRIANGLE>(sky.first, sky.second);
+	std::shared_ptr<Mesh_t> sky_mesh = std::make_shared<Mesh<TRIANGLE>>(sky.first, sky.second);
 	
-	VertexBuffer* sky_vertex_buffer = new VertexBuffer(queue, commandBuffer[0], { sky_mesh });
+	std::shared_ptr<VertexBuffer> sky_vertex_buffer = std::make_shared <VertexBuffer>(queue, commandBuffer[0], 
+		std::vector<std::shared_ptr<Mesh_t>>({ sky_mesh }));
 
 
 	//PostProcessQuad
-	Geometry::Mesh_t* quad = new Geometry::IndexedMesh<Geometry::TRIANGLE>(Geometry::P3UV);
+	std::shared_ptr<Mesh_t> quad = std::make_shared <IndexedMesh<TRIANGLE>>(Geometry::P3UV);
 
 	quad->appendVertex({ -1.0,-1.0,0.0,0.0,0.0 });
 	quad->appendVertex({ -1.0, 1.0,0.0,0.0,1.0 });
@@ -73,7 +75,10 @@ int main() {
 	quad->appendIndex(3);
 	quad->appendIndex(0);
 
-	VertexBuffer* quad_vertex_buffer = new VertexBuffer(queue, commandBuffer[0],{ quad });
+
+	std::shared_ptr<VertexBuffer> quad_vertex_buffer = std::make_shared <VertexBuffer>(queue, commandBuffer[0],
+		std::vector<std::shared_ptr<Mesh_t>>({ quad }));
+
 	
 
 	//Uniform Buffer
@@ -91,13 +96,13 @@ int main() {
 
 
 	//Time PushConstant
-	PushConstant* timeConstant = new PushConstant();
+	std::shared_ptr<PushConstant> timeConstant = std::make_shared<PushConstant>();
 	float time = 0.0;
 	timeConstant->addVariable("Time",  time );
 
 
 	//camera PushConstant
-	PushConstant* cameraConstant = new PushConstant();
+	std::shared_ptr<PushConstant> cameraConstant = std::make_shared<PushConstant>();
 	vec4f camera = vec4f({ 0.f,0.f,4.f,1.0 });
 	cameraConstant->addVariable("camera", camera);
 

@@ -14,8 +14,8 @@ std::string prefix ="";
 #endif
 
 std::shared_ptr < GraphicPipeline > pipeline;
-VertexBuffer* triangle_vertex_buffer;
-std::vector<PushConstant* > constants(3);
+std::shared_ptr < VertexBuffer > triangle_vertex_buffer;
+std::vector< std::shared_ptr< PushConstant>  > constants(3);
 
 RenderPass* createRenderPass(const Queue& queue, CommandBuffer& commandBuffer) {
 	SwapChain* s = SwapChain::getSwapChain();
@@ -91,7 +91,7 @@ int main() {
 	vertexFormat format = vertexFormat({ POS3,COL3 });
 
 	//we create a indexed triangle mesh with the desired format
-	Mesh_t* triangle = new IndexedMesh<TRIANGLE>(format);
+	std::shared_ptr<Mesh_t> triangle = std::make_shared<IndexedMesh<TRIANGLE>>(format);
 
 	//adding 3 vertices
 	triangle->appendVertex({ -0.75f, 0.75f, 0.0f, 1.0f , 0.0f , 0.0f });
@@ -109,15 +109,15 @@ int main() {
 	auto model1 = PrepareTranslationMatrix(0.3, -0.5, 0.0) * PrepareScalingMatrix(0.3, 0.3, 1.0);
 	auto model2 = PrepareTranslationMatrix(0.3, 0.5, 0.0) * PrepareScalingMatrix(0.3, 0.3, 1.0);
 
-	constants[0] = new PushConstant();
+	constants[0] = std::make_shared<PushConstant>();
 	constants[0]->addVariable("model", model0);
-	constants[1] = new PushConstant();
+	constants[1] = std::make_shared<PushConstant>();
 	constants[1]->addVariable("model", model1);
-	constants[2] = new PushConstant();
+	constants[2] = std::make_shared<PushConstant>();
 	constants[2]->addVariable("model", model2);
 
 	//creating an allocating a vertex buffer
-	triangle_vertex_buffer = new VertexBuffer(queue, commandBuffer, { triangle });
+	triangle_vertex_buffer = std::make_shared<VertexBuffer>(queue, commandBuffer, std::vector<std::shared_ptr<Mesh_t>>{ triangle });
 
 
 	auto pass = createRenderPass(queue, commandBuffer);

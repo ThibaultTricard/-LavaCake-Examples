@@ -78,7 +78,7 @@ int main() {
 
 
 	//PostProcessQuad
-	Mesh_t* quad = new IndexedMesh<TRIANGLE>(P3UV);
+	std::shared_ptr<Mesh_t> quad = std::make_shared<IndexedMesh<TRIANGLE>>(P3UV);
 
 	quad->appendVertex({ -1.0,-1.0,0.0,0.0,0.0 });
 	quad->appendVertex({ -1.0, 1.0,0.0,0.0,1.0 });
@@ -95,7 +95,7 @@ int main() {
 
 	
 
-	VertexBuffer* quad_vertex_buffer = new VertexBuffer(graphicQueue, cmbBuff,{ quad });
+	std::shared_ptr<VertexBuffer> quad_vertex_buffer = std::make_shared<VertexBuffer>(graphicQueue, cmbBuff,std::vector<std::shared_ptr<Mesh_t>>{ quad });
 
 	//renderPass
 	RenderPass* showPass = new RenderPass();

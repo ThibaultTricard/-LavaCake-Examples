@@ -51,23 +51,23 @@ int main() {
 
 	//knot mesh
 	std::pair<std::vector<float>, vertexFormat > knot = Load3DModelFromObjFile(prefix+"Data/Models/knot.obj", true, false, false , true);
-	Mesh_t* knot_mesh = new Mesh<TRIANGLE>(knot.first, knot.second);
+	std::shared_ptr<Mesh_t> knot_mesh = std::make_shared < Mesh<TRIANGLE>>(knot.first, knot.second);
 
 
 	//plane mesh
 	std::pair<std::vector<float>, vertexFormat > plane = Load3DModelFromObjFile(prefix+"Data/Models/plane.obj", true, false, false, false);
-	Mesh_t* plane_mesh = new Mesh<TRIANGLE>(plane.first, plane.second);
+	std::shared_ptr<Mesh_t> plane_mesh = std::make_shared<Mesh<TRIANGLE>>(plane.first, plane.second);
 
 	
 
 
-	VertexBuffer* scene_vertex_buffer = new VertexBuffer(queue, allocBuff, { plane_mesh, knot_mesh  });
+	std::shared_ptr<VertexBuffer> scene_vertex_buffer = std::make_shared<VertexBuffer>(queue, allocBuff, std::vector<std::shared_ptr<Mesh_t>>( { plane_mesh, knot_mesh }));
 
 	VertexBuffer* plane_buffer = new VertexBuffer(queue, allocBuff, { plane_mesh });
 
 
 	//PostProcessQuad
-	Mesh_t* quad = new IndexedMesh<Geometry::TRIANGLE>(Geometry::P3UV);
+	std::shared_ptr<Mesh_t> quad =std::make_shared<IndexedMesh<Geometry::TRIANGLE>>(Geometry::P3UV);
 	
 	quad->appendVertex({ -1.0,-1.0,0.0,0.0,0.0 });
 	quad->appendVertex({ -1.0, 1.0,0.0,0.0,1.0 });
@@ -82,7 +82,7 @@ int main() {
 	quad->appendIndex(3);
 	quad->appendIndex(0);              
 	
-	VertexBuffer* quad_vertex_buffer = new VertexBuffer(queue, commandBuffer[0], { quad });
+	std::shared_ptr<VertexBuffer> quad_vertex_buffer = std::make_shared<VertexBuffer>(queue, commandBuffer[0], std::vector<std::shared_ptr<Mesh_t>>({ quad }));
 
 	//uniform buffer
 	uint32_t shadowsize = 64;
@@ -98,7 +98,7 @@ int main() {
 	b.end();
 
 	//PushConstant
-	PushConstant* constant = new PushConstant();
+	std::shared_ptr<PushConstant> constant = std::make_shared<PushConstant>();
 	vec4f LigthPos = vec4f({ 0.f,4.f,0.7f,0.0 });
 	constant->addVariable("LigthPos", LigthPos);
 

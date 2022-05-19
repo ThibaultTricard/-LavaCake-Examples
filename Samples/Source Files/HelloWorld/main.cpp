@@ -16,7 +16,7 @@ std::string prefix ="";
 #endif
 
 std::shared_ptr < GraphicPipeline > pipeline;
-VertexBuffer* triangle_vertex_buffer;
+std::shared_ptr < VertexBuffer > triangle_vertex_buffer;
 
 RenderPass* createRenderPass(const Queue& queue, CommandBuffer& commandBuffer) {
 	SwapChain* s = SwapChain::getSwapChain();
@@ -90,7 +90,7 @@ int main() {
 	vertexFormat format = vertexFormat({ POS3,COL3 });
 
 	//we create a indexed triangle mesh with the desired format
-	Mesh_t* triangle = new IndexedMesh<TRIANGLE>(format);
+	std::shared_ptr<Mesh_t> triangle = std::make_shared<IndexedMesh<TRIANGLE>>(format);
 
 	//adding 3 vertices
 	triangle->appendVertex({ -0.75f, 0.75f, 0.0f, 1.0f , 0.0f , 0.0f });
@@ -105,7 +105,7 @@ int main() {
 
 
 	//creating an allocating a vertex buffer
-	triangle_vertex_buffer = new VertexBuffer(queue, commandBuffer, { triangle });
+	triangle_vertex_buffer = std::make_shared<VertexBuffer>(queue, commandBuffer, std::vector<std::shared_ptr<Mesh_t>>({ triangle }) );
 
 	auto pass = createRenderPass(queue, commandBuffer);
 	
