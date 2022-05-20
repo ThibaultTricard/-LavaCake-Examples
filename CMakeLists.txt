@@ -109,18 +109,6 @@ target_link_libraries( PostProcess LavaCake )
 set_property( TARGET PostProcess PROPERTY FOLDER "Samples" )
 
 
-#SSAO
-clearShader()
-file( GLOB SHADER_SOURCE_FILES "Samples/Data/Shaders/SSAO/*")
-FOREACH( shader ${SHADER_SOURCE_FILES} )
-	string(REGEX MATCH "[A-Za-z0-9_\\-]*\\.[A-Za-z0-9]*" FILENAME SSAO/${shader})
-	addShader(${shader} ${CMAKE_CURRENT_BINARY_DIR}/Data/Shaders/SSAO/${FILENAME}.spv spv1.3)
-endforeach()
-add_executable( SSAO  "Samples/Source Files/SSAO/main.cpp")
-AutoSPIRV(SSAO)
-target_link_libraries( SSAO LavaCake )
-set_property( TARGET SSAO PROPERTY FOLDER "Samples" )
-
 option(BUILD_RAYTRACING_EXAMPLE "Build the raytracing example" off)
 
 

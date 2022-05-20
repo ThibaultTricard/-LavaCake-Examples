@@ -105,9 +105,9 @@ int main() {
 	triangle->appendIndex(2);
 
 
-	auto model0 = PrepareTranslationMatrix(-0.3, -0.4, 0.0)  * PrepareScalingMatrix(0.3, 0.3, 1.0);
-	auto model1 = PrepareTranslationMatrix(0.3, -0.5, 0.0) * PrepareScalingMatrix(0.3, 0.3, 1.0);
-	auto model2 = PrepareTranslationMatrix(0.3, 0.5, 0.0) * PrepareScalingMatrix(0.3, 0.3, 1.0);
+	auto model0 = PrepareTranslationMatrix(-0.3f, -0.4f, 0.0f)  * PrepareScalingMatrix(0.3f, 0.3f, 1.0f);
+	auto model1 = PrepareTranslationMatrix(0.3f, -0.5f, 0.0f) * PrepareScalingMatrix(0.3f, 0.3f, 1.0f);
+	auto model2 = PrepareTranslationMatrix(0.3f, 0.5f, 0.0f) * PrepareScalingMatrix(0.3f, 0.3f, 1.0f);
 
 	constants[0] = std::make_shared<PushConstant>();
 	constants[0]->addVariable("model", model0);

@@ -37,7 +37,7 @@ int main() {
 	std::vector<CommandBuffer> commandBuffer = std::vector<CommandBuffer>(nbFrames);
 	std::vector < std::shared_ptr<Semaphore> > semaphores;
 
-	for (uint32_t i = 0; i < nbFrames; i++) {
+	for (int i = 0; i < nbFrames; i++) {
 		semaphores.push_back(std::make_shared<Semaphore>());
 	}
 
