@@ -41,9 +41,8 @@ int main() {
 	CommandBuffer  commandBuffer;
 	std::shared_ptr<Semaphore> semaphore = std::make_shared<Semaphore>();
 
-
-	//We define the stride format we need for the mesh here 
-	vertexFormat format = vertexFormat({ POS3, F1 });
+	std::shared_ptr<Semaphore> RTsemaphore = std::make_shared<Semaphore>();
+	
 
 
 	//we create a indexed triangle mesh with the desired format
@@ -65,7 +64,7 @@ int main() {
 
 
 	std::array<vec4f,64> samples;
-	srand(time(NULL));
+	srand(6);
 	for (unsigned int i = 0; i < 64; i++)
 	{
 		vec3f noise({
@@ -78,8 +77,11 @@ int main() {
 		samples[i] = vec4f({ noise[0], noise[1], noise[2],0.0 });
 	}
 
+	int frameNumber = 0;
+
 	UniformBuffer sampleBuffer;
 	sampleBuffer.addVariable("sample", samples);
+	sampleBuffer.addVariable("frameNumber", frameNumber);
 	sampleBuffer.end();
 	
 	//547.8
@@ -103,16 +105,17 @@ int main() {
 	}
 
 
+
+
 	UniformBuffer lightSampleBuffer;
 	lightSampleBuffer.addVariable("sample", lightSample);
 	lightSampleBuffer.end();
 
-	Mesh_t* light = new IndexedMesh<TRIANGLE>(format);
+	//We define the stride format we need for the mesh here 
+	vertexFormat format = vertexFormat({ POS3, F1 });
 
+	std::shared_ptr<Mesh_t> light = std::make_shared<IndexedMesh<TRIANGLE>>( IndexedMesh<TRIANGLE>(format));
 	
-
-	
-
 	light->appendVertex({ 343.0, ligthY, 227.0, 0.0f });
 	light->appendVertex({ 343.0, ligthY, 332.0, 0.0f });
 	light->appendVertex({ 213.0, ligthY, 332.0, 0.0f });
@@ -126,7 +129,7 @@ int main() {
 	light->appendIndex(3);
 	light->appendIndex(0);
 
-	Mesh_t* floor = new IndexedMesh<TRIANGLE>(format);
+	std::shared_ptr<Mesh_t> floor = std::make_shared<IndexedMesh<TRIANGLE>>( IndexedMesh<TRIANGLE>(format));
 	floor->appendVertex({ 552.8f,  0.0f, 0.0f, 1.0f });
 	floor->appendVertex({ 0.0f,		 0.0f, 0.0f, 1.0f });
 	floor->appendVertex({ 0.0f,		 0.0f, 559.2f, 1.0f });
@@ -141,7 +144,7 @@ int main() {
 	floor->appendIndex(0);
 
 
-	Mesh_t* ceiling = new IndexedMesh<TRIANGLE>(format);
+	std::shared_ptr<Mesh_t> ceiling = std::make_shared<IndexedMesh<TRIANGLE>>( IndexedMesh<TRIANGLE>(format));
 
 	ceiling->appendVertex({ 556.0f,  548.8f, 0.0, 1.0f });
 	ceiling->appendVertex({ 556.0f,  548.8f, 559.2f, 1.0f });
@@ -157,7 +160,7 @@ int main() {
 	ceiling->appendIndex(0);
 
 
-	Mesh_t* backWall = new IndexedMesh<TRIANGLE>(format);
+	std::shared_ptr<Mesh_t> backWall = std::make_shared<IndexedMesh<TRIANGLE>>( IndexedMesh<TRIANGLE>(format));
 
 	backWall->appendVertex({ 549.6f,  0.0f,			559.2f, 1.0f });
 	backWall->appendVertex({ 0.0f,    0.0f,			559.2f, 1.0f });
@@ -173,7 +176,7 @@ int main() {
 	backWall->appendIndex(0);
 
 
-	Mesh_t* rightWall = new IndexedMesh<TRIANGLE>(format);
+	std::shared_ptr<Mesh_t> rightWall = std::make_shared<IndexedMesh<TRIANGLE>>( IndexedMesh<TRIANGLE>(format));
 
 	rightWall->appendVertex({ 0.0f,    0.0f,			559.2f, 2.0f });
 	rightWall->appendVertex({ 0.0f,    0.0f,				0.0f, 2.0f });
@@ -189,7 +192,7 @@ int main() {
 	rightWall->appendIndex(0);
 
 
-	Mesh_t* leftWall = new IndexedMesh<TRIANGLE>(format);
+	std::shared_ptr<Mesh_t> leftWall = std::make_shared<IndexedMesh<TRIANGLE>>( IndexedMesh<TRIANGLE>(format));
 
 	leftWall->appendVertex({ 552.8f,    0.0f,			   0.0f, 3.0f });
 	leftWall->appendVertex({ 549.6f,    0.0f,			 559.2f, 3.0f });
@@ -205,7 +208,7 @@ int main() {
 	leftWall->appendIndex(0);
 
 
-	Mesh_t* box1 = new IndexedMesh<TRIANGLE>(format);
+	std::shared_ptr<Mesh_t> box1 = std::make_shared<IndexedMesh<TRIANGLE>>( IndexedMesh<TRIANGLE>(format));
 
 	box1->appendVertex({ 130.0, 165.0,  65.0, 1.0f });
 	box1->appendVertex({  82.0, 165.0, 225.0, 1.0f });
@@ -268,7 +271,7 @@ int main() {
 	
 
 
-	Mesh_t* box2 = new IndexedMesh<TRIANGLE>(format);
+	std::shared_ptr<Mesh_t> box2 = std::make_shared<IndexedMesh<TRIANGLE>>( IndexedMesh<TRIANGLE>(format));
 
 	box2->appendVertex({ 423.0, 330.0, 247.0, 1.0f });
 	box2->appendVertex({ 265.0, 330.0, 296.0, 1.0f });
@@ -333,7 +336,7 @@ int main() {
 	std::shared_ptr<VertexBuffer> triangle_vertex_buffer = std::make_shared<VertexBuffer>(
 		queue, 
 		commandBuffer,
-		std::vector<Mesh_t*>{ light,ceiling, leftWall, rightWall, floor, backWall,box1,box2 }, 
+		std::vector<std::shared_ptr<Mesh_t>>{ light,ceiling, leftWall, rightWall, floor, backWall,box1,box2 }, 
 		(uint32_t)0, VK_VERTEX_INPUT_RATE_VERTEX, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR);
 
 	VkTransformMatrixKHR transformMatrixKHR = { 1,0,0,0,
@@ -398,7 +401,7 @@ int main() {
 
 
 	//PostProcessQuad
-	Mesh_t* quad = new IndexedMesh<TRIANGLE>(P3UV);
+	std::shared_ptr<Mesh_t> quad = std::make_shared<IndexedMesh<TRIANGLE>>( IndexedMesh<TRIANGLE>(P3UV));
 
 	quad->appendVertex({ -1.0,-1.0,0.0,0.0,0.0 });
 	quad->appendVertex({ -1.0, 1.0,0.0,0.0,1.0 });
@@ -413,9 +416,8 @@ int main() {
 	quad->appendIndex(3);
 	quad->appendIndex(0);
 
-
-
-	VertexBuffer* quad_vertex_buffer = new VertexBuffer(queue, commandBuffer, { quad });
+	std::vector<std::shared_ptr<LavaCake::Geometry::Mesh_t>> meshes({ quad });
+	std::shared_ptr<VertexBuffer> quad_vertex_buffer = std::make_shared<VertexBuffer>( VertexBuffer(queue, commandBuffer, meshes));
 
 	UniformBuffer passNumber;
 	passNumber.addVariable("dimention", LavaCake::vec2u({ size.width, size.height }));
@@ -457,35 +459,13 @@ int main() {
 	bool first = true;
 
 
-	commandBuffer.resetFence();
-	commandBuffer.beginRecord();
-
-
-	if (first) {
-		materialBuffer.update(commandBuffer);
-		sampleBuffer.update(commandBuffer);
-		lightSampleBuffer.update(commandBuffer);
-		proj.update(commandBuffer);
-	}
-
-	rtPipeline.trace(commandBuffer);
-	commandBuffer.endRecord();
-
-	commandBuffer.submit(queue, {}, {});
-
-	commandBuffer.wait(UINT64_MAX);
-	commandBuffer.resetFence();
+	
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 
 		VkDevice logical = d->getLogicalDevice();
-		
-		if (first) {
-			
-			first = false;
-		}
-		
+	
 
 		const SwapChainImage& image = s->acquireImage();
 
@@ -495,23 +475,47 @@ int main() {
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
 			});
 
+		wait_semaphore_infos.push_back({
+			RTsemaphore,																					// VkSemaphore            Semaphore
+			VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR					// VkPipelineStageFlags   WaitingStage
+		});
 
-		commandBuffer.wait();
+		
+
+		sampleBuffer.setVariable("frameNumber", frameNumber);
+		commandBuffer.wait(UINT64_MAX);
 		commandBuffer.resetFence();
+		commandBuffer.beginRecord();
+
+
+		if (first) {
+			materialBuffer.update(commandBuffer);
+			lightSampleBuffer.update(commandBuffer);
+			proj.update(commandBuffer);
+
+			first = false;
+		}
+		sampleBuffer.update(commandBuffer);
+
+		frameNumber++;
+
+		rtPipeline.trace(commandBuffer);
+		commandBuffer.endRecord();
+
+		commandBuffer.submit(queue, {}, { RTsemaphore });
+
+		commandBuffer.wait(UINT64_MAX);
+		commandBuffer.resetFence();
+
 		commandBuffer.beginRecord();
 		passNumber.update(commandBuffer);
 		showPass->setSwapChainImage(*frameBuffer, image);
 
-
 		showPass->draw(commandBuffer, *frameBuffer, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
-
 		
 		commandBuffer.endRecord();
 
-		
-
 		commandBuffer.submit(queue, wait_semaphore_infos, { semaphore });
-
 
 		s->presentImage(presentQueue, image, { semaphore });
 		

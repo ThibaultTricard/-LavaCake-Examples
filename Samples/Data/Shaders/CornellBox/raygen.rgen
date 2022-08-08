@@ -42,7 +42,8 @@ void main()
     hitValue.lightRay = false;
     traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, cam.cameraPos.xyz, tmin, rayDir, tmax, 0);
 
-    
+  vec3 value = imageLoad(image,ivec2(gl_LaunchIDEXT.xy)).xyz;
+	value = value + 0.1 * (hitValue.color -value);
 
-	imageStore(image, ivec2(gl_LaunchIDEXT.xy), vec4(hitValue.color,0.0));
+	imageStore(image, ivec2(gl_LaunchIDEXT.xy), vec4(value,0.0));
 }

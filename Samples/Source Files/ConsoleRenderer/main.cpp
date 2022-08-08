@@ -118,6 +118,7 @@ int main() {
 
 	shadowPipeline->setVerticesInfo(scene_vertex_buffer->getBindingDescriptions(), scene_vertex_buffer->getAttributeDescriptions(), scene_vertex_buffer->primitiveTopology());
 
+	
 	shadowPipeline->setVertices({ scene_vertex_buffer });
 	shadowPipeline->addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
 
@@ -134,6 +135,22 @@ int main() {
 	shadowMapPass.prepareOutputFrameBuffer(queue, commandBuffer[0] ,shadow_map_buffer);
 
 	//Render Pass
+
+	vertexBufferConstant vbc;
+
+	vbc.buffer = scene_vertex_buffer;
+	vbc.constant_ranges.push_back(
+		{
+			constant,
+			{
+				VK_SHADER_STAGE_VERTEX_BIT,
+				0,
+				constant->size()
+			}
+		}
+	);
+
+
 	RenderPass renderPass = RenderPass();
 	std::shared_ptr<GraphicPipeline> renderPipeline = std::make_shared<GraphicPipeline>(vec3f({ 0,0,0 }), vec3f({ float(shadowsize),float(shadowsize),1.0f }), vec2f({ 0,0 }), vec2f({ float(shadowsize),float(shadowsize) }));
 	VertexShaderModule renderVertex(prefix+"Data/Shaders/ConsoleRenderer/scene.vert.spv");
@@ -142,9 +159,15 @@ int main() {
 	FragmentShaderModule renderFrag(prefix+"Data/Shaders/ConsoleRenderer/scene.frag.spv");
 	renderPipeline->setFragmentModule(renderFrag);
 
-	renderPipeline->setPushContantInfo({ { constant->size() ,VK_SHADER_STAGE_VERTEX_BIT } });
+	renderPipeline->setPushContantInfo({ {
+				VK_SHADER_STAGE_VERTEX_BIT,
+				0,
+				constant->size()
+			} });
 	renderPipeline->setVerticesInfo(scene_vertex_buffer->getBindingDescriptions(), scene_vertex_buffer->getAttributeDescriptions(), scene_vertex_buffer->primitiveTopology());
-	renderPipeline->setVertices({ { scene_vertex_buffer, {{constant, VK_SHADER_STAGE_VERTEX_BIT} }} });
+	
+	
+	renderPipeline->setVertices({ vbc });
 	renderPipeline->addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
 
 	renderPipeline->addFrameBuffer(shadow_map_buffer, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
