@@ -33,7 +33,7 @@ RenderPass* createRenderPass(const Queue& queue, CommandBuffer& commandBuffer) {
 	pipeline->setVertexModule(vertexShader);
 	pipeline->setFragmentModule(fragmentShader);
 	pipeline->setVerticesInfo(triangle_vertex_buffer->getBindingDescriptions(), triangle_vertex_buffer->getAttributeDescriptions() ,triangle_vertex_buffer->primitiveTopology());
-	pipeline->setPushContantInfo({ { constants[0]->size(), VK_SHADER_STAGE_VERTEX_BIT } });
+	pipeline->setPushContantInfo({ { VK_SHADER_STAGE_VERTEX_BIT, 0, constants[0]->size()  } });
 
 
 	SubpassAttachment SA;
@@ -152,9 +152,9 @@ int main() {
 			pass->prepareOutputFrameBuffer(queue, commandBuffer, *frameBuffers);
 
 			pipeline->setVertices({
-				{ triangle_vertex_buffer, {{constants[0],VK_SHADER_STAGE_VERTEX_BIT}} },
-				{ triangle_vertex_buffer, {{constants[1],VK_SHADER_STAGE_VERTEX_BIT}} },
-				{ triangle_vertex_buffer, {{constants[2],VK_SHADER_STAGE_VERTEX_BIT}} }
+				{ triangle_vertex_buffer, {{constants[0],{VK_SHADER_STAGE_VERTEX_BIT,0,constants[0]->size()}}}},
+				{ triangle_vertex_buffer, {{constants[1],{VK_SHADER_STAGE_VERTEX_BIT,0,constants[1]->size()}}} },
+				{ triangle_vertex_buffer, {{constants[2],{VK_SHADER_STAGE_VERTEX_BIT,0,constants[2]->size()}}} }
 			});
 			g_resize = false;
 		}

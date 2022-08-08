@@ -96,19 +96,6 @@ target_link_libraries( JumpFlooding LavaCake )
 set_property( TARGET JumpFlooding PROPERTY FOLDER "Samples" )
 
 
-#postProcess
-clearShader()
-file( GLOB SHADER_SOURCE_FILES "Samples/Data/Shaders/PostProcess/*")
-FOREACH( shader ${SHADER_SOURCE_FILES} )
-	string(REGEX MATCH "[A-Za-z0-9_\\-]*\\.[A-Za-z0-9]*" FILENAME ${shader})
-	addShader(${shader} ${CMAKE_CURRENT_BINARY_DIR}/Data/Shaders/PostProcess/${FILENAME}.spv spv1.3)
-endforeach()
-add_executable( PostProcess  "Samples/Source Files/PostProcess/main.cpp")
-AutoSPIRV(PostProcess)
-target_link_libraries( PostProcess LavaCake )
-set_property( TARGET PostProcess PROPERTY FOLDER "Samples" )
-
-
 option(BUILD_RAYTRACING_EXAMPLE "Build the raytracing example" off)
 
 

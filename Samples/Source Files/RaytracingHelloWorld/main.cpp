@@ -39,7 +39,7 @@ int main() {
 	vertexFormat format = vertexFormat({ POS3 });
 
 	//we create a indexed triangle mesh with the desired format
-	Mesh_t* triangle = new IndexedMesh<TRIANGLE>(format);
+	std::shared_ptr<Mesh_t> triangle = std::make_shared<IndexedMesh<TRIANGLE>>(IndexedMesh<TRIANGLE>(format));
 
 	//adding 3 vertices
 	triangle->appendVertex({ 1.0f,  1.0f, 0.0f });
@@ -53,7 +53,7 @@ int main() {
 	triangle->appendIndex(2);
 
 	//creating an allocating a vertex buffer
-	std::shared_ptr<VertexBuffer> triangle_vertex_buffer = std::make_shared<VertexBuffer>(queue, commandBuffer, std::vector<Mesh_t*>{ triangle } , (uint32_t)0 , VK_VERTEX_INPUT_RATE_VERTEX, (VkBufferUsageFlags)VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT| VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR);
+	std::shared_ptr<VertexBuffer> triangle_vertex_buffer = std::make_shared<VertexBuffer>(queue, commandBuffer, std::vector<std::shared_ptr<Mesh_t>>{ triangle } , (uint32_t)0 , VK_VERTEX_INPUT_RATE_VERTEX, (VkBufferUsageFlags)VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT| VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR);
 
 	VkTransformMatrixKHR transformMatrixKHR = { 1,0,0,0,
 																						0,1,0,0,
@@ -105,7 +105,8 @@ int main() {
 
 
 	//PostProcessQuad
-	Mesh_t* quad = new IndexedMesh<TRIANGLE>(P3UV);
+	std::shared_ptr<Mesh_t> quad = std::make_shared<IndexedMesh<TRIANGLE>>(IndexedMesh<TRIANGLE>(P3UV));
+
 
 	quad->appendVertex({ -1.0,-1.0,0.0,0.0,0.0 });
 	quad->appendVertex({ -1.0, 1.0,0.0,0.0,1.0 });
@@ -122,7 +123,7 @@ int main() {
 
 
 
-	VertexBuffer* quad_vertex_buffer = new VertexBuffer(queue, commandBuffer, { quad });
+	std::shared_ptr<VertexBuffer> quad_vertex_buffer = std::make_shared<VertexBuffer>(VertexBuffer(queue, commandBuffer, { quad }));
 
 
 	UniformBuffer passNumber;
