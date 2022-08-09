@@ -87,7 +87,7 @@ void main(){
 
 	vec3 dirI = normalize(gl_WorldRayDirectionEXT);
 
-	
+	float phi = 0;
 
 	if(!hitValue.lightRay && v0.mat.emR < 0.5){
 
@@ -99,20 +99,19 @@ void main(){
 
 		hitValue.lightRay = true;
 		traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, origin, tmin, LightDir, tmax, 0);
-		vec3 L = hitValue.color* dot(n, LightDir);
+		phi = dot(n, LightDir);
+		vec3 L = hitValue.color* phi;
 
 		hitValue.lightRay = false;
 
 		if(depth < 8){
-
-
 			vec3 s = samples.dir[int(r * 64.0)].xyz;
 
 			vec3 d = TBN*s;
 
 			traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, origin, tmin, d, tmax, 0);
 			float theta = dot(dirI, d);
-			L+= hitValue.color* theta;
+			L= L + hitValue.color* theta;
 		}
 
 
@@ -124,6 +123,6 @@ void main(){
 	else{
 		hitValue.color = vec3(v0.mat.emR,v0.mat.emG,v0.mat.emB);
 	}
-  //hitValue.color =  dirI;
+  //hitValue.color =  vec3(phi);
 
 }

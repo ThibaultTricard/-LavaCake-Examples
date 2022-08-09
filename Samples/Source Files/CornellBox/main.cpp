@@ -86,20 +86,29 @@ int main() {
 	
 	//547.8
 
-	float ligthY = 547.8f;
+	float ligthX_min = 50.0f;
+	float ligthX_max = ligthX_min + 130.0f;
+
+	float ligthY_min = 400.0f;
+	float ligthY_max = ligthY_min + 130.0f;
+
+	float ligthZ_min = 10.0f;
+	float ligthZ_max = ligthZ_min + 105;
 
 	std::array<vec4f,64> lightSample;
 	srand(time(NULL));
 	for (unsigned int i = 0; i < 64; i++)
 	{
-		vec2f uv({
+		vec3f uvw({
 			(float)rand() / (float)RAND_MAX,
-			(float)rand() / (float)RAND_MAX, });
+			(float)rand() / (float)RAND_MAX,
+			(float)rand() / (float)RAND_MAX
+			});
 
 
-		float x = 213.0 + (343.0 - 213.0) * uv[0];
-		float y = ligthY;
-		float z = 227.0 + (332.0 - 227.0) * uv[1];
+		float x = ligthX_min + (ligthX_max - ligthX_min) * uvw[0];
+		float y = ligthY_min + (ligthY_max - ligthY_min) * uvw[1];
+		float z = ligthZ_min + (ligthZ_max - ligthZ_min) * uvw[2];
 
 		lightSample[i] = (vec4f({ x, y, z,0.0 }));
 	}
@@ -116,11 +125,17 @@ int main() {
 
 	std::shared_ptr<Mesh_t> light = std::make_shared<IndexedMesh<TRIANGLE>>( IndexedMesh<TRIANGLE>(format));
 	
-	light->appendVertex({ 343.0, ligthY, 227.0, 0.0f });
-	light->appendVertex({ 343.0, ligthY, 332.0, 0.0f });
-	light->appendVertex({ 213.0, ligthY, 332.0, 0.0f });
-	light->appendVertex({ 213.0, ligthY, 227.0, 0.0f });
+	light->appendVertex({ ligthX_max, ligthY_min, ligthZ_min, 0.0f });
+	light->appendVertex({ ligthX_max, ligthY_min, ligthZ_max, 0.0f });
+	light->appendVertex({ ligthX_min, ligthY_min, ligthZ_max, 0.0f });
+	light->appendVertex({ ligthX_min, ligthY_min, ligthZ_min, 0.0f });
 
+	light->appendVertex({ ligthX_max, ligthY_max, ligthZ_min, 0.0f });
+	light->appendVertex({ ligthX_max, ligthY_max, ligthZ_max, 0.0f });
+	light->appendVertex({ ligthX_min, ligthY_max, ligthZ_max, 0.0f });
+	light->appendVertex({ ligthX_min, ligthY_max, ligthZ_min, 0.0f });
+
+	//face up
 	light->appendIndex(0);
 	light->appendIndex(1);
 	light->appendIndex(2);
@@ -128,6 +143,51 @@ int main() {
 	light->appendIndex(2);
 	light->appendIndex(3);
 	light->appendIndex(0);
+
+	//face down
+	light->appendIndex(5);
+	light->appendIndex(4);
+	light->appendIndex(6);
+
+	light->appendIndex(7);
+	light->appendIndex(6);
+	light->appendIndex(4);
+
+	//face left
+	light->appendIndex(4);
+	light->appendIndex(5);
+	light->appendIndex(0);
+
+	light->appendIndex(0);
+	light->appendIndex(5);
+	light->appendIndex(1);
+
+	//face back
+	light->appendIndex(1);
+	light->appendIndex(6);
+	light->appendIndex(2);
+
+	light->appendIndex(6);
+	light->appendIndex(1);
+	light->appendIndex(5);
+
+	//face right
+	light->appendIndex(3);
+	light->appendIndex(2);
+	light->appendIndex(7);
+
+	light->appendIndex(7);
+	light->appendIndex(2);
+	light->appendIndex(6);
+
+	//face forward
+	light->appendIndex(0);
+	light->appendIndex(3);
+	light->appendIndex(4);
+
+	light->appendIndex(4);
+	light->appendIndex(3);
+	light->appendIndex(7);
 
 	std::shared_ptr<Mesh_t> floor = std::make_shared<IndexedMesh<TRIANGLE>>( IndexedMesh<TRIANGLE>(format));
 	floor->appendVertex({ 552.8f,  0.0f, 0.0f, 1.0f });
@@ -360,7 +420,7 @@ int main() {
 	tlAS.alloctate(queue, commandBuffer, false);
 	//we create a indexed triangle mesh with the desired format
 
-	Image output = createStorageImage(queue, commandBuffer, size.width, size.height, 1, s->imageFormat());
+	Image output = createStorageImage(queue, commandBuffer, size.width, size.height, 1, VK_FORMAT_R32G32B32A32_SFLOAT);
 
 	UniformBuffer proj;
 
