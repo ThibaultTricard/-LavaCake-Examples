@@ -67,7 +67,7 @@ void main(){
   
 
 	vec3 n = normalize(cross(v1.pos-v0.pos,v2.pos-v1.pos));
-	vec3 tan = normalize(v1.pos-v0.pos);
+	vec3 tan = normalize(v0.pos-v2.pos);
 	vec3 bitan = normalize(cross(n,tan));
 	mat3 TBN = mat3(tan, bitan, n);
 
@@ -75,8 +75,6 @@ void main(){
 	float tmax = 10000.0;
 
 	vec3 origin =  v0.pos * barycentricCoords.x  + v1.pos * barycentricCoords.y  + v2.pos * barycentricCoords.z;
-
-	uint shift = uint(origin.x * 23465.0 + origin.y * 13.0 + origin.z * 563.0) % 64;
 
 	vec3 result = vec3(v0.mat.emR, v0.mat.emG, v0.mat.emB);
 	vec3 diffuse = vec3(v0.mat.diffR, v0.mat.diffG, v0.mat.diffB);
@@ -87,7 +85,7 @@ void main(){
 
 	vec3 irradiance = vec3(0);
 
-	vec3 dirI = gl_WorldRayDirectionEXT;
+	vec3 dirI = normalize(gl_WorldRayDirectionEXT);
 
 	
 
@@ -113,7 +111,7 @@ void main(){
 			vec3 d = TBN*s;
 
 			traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, origin, tmin, d, tmax, 0);
-			float theta = dot(n, d);
+			float theta = dot(dirI, d);
 			L+= hitValue.color* theta;
 		}
 
@@ -121,12 +119,11 @@ void main(){
 	
 		hitValue.color = vec3(v0.mat.diffR * L.x, v0.mat.diffG * L.y, v0.mat.diffB * L.z) ;
 
-		//hitValue.color = result;
 		hitValue.depth = depth;
 	}
 	else{
 		hitValue.color = vec3(v0.mat.emR,v0.mat.emG,v0.mat.emB);
 	}
-  //hitValue =  barycentricCoords;
+  //hitValue.color =  dirI;
 
 }
