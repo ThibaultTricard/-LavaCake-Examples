@@ -1,13 +1,9 @@
 #define LAVACAKE_WINDOW_MANAGER_GLFW
-
 #include <LavaCake/Framework/Framework.h> 
-
-
 
 using namespace LavaCake;
 using namespace LavaCake::Geometry;
 using namespace LavaCake::Framework;
-
 
 #ifdef __APPLE__
 std::string prefix ="../";
@@ -15,79 +11,29 @@ std::string prefix ="../";
 std::string prefix ="";
 #endif
 
-std::shared_ptr < GraphicPipeline > pipeline;
-std::shared_ptr < VertexBuffer > triangle_vertex_buffer;
-
-RenderPass* createRenderPass(const Queue& queue, CommandBuffer& commandBuffer) {
-	SwapChain* s = SwapChain::getSwapChain();
-	VkExtent2D size = s->size();
-	//We define the stride format we need for the mesh here 
-	//each vertex is a 3D position followed by a RGB color
-	
-
-	VertexShaderModule vertexShader(prefix + "Data/Shaders/helloworld/shader.vert.spv");
-	FragmentShaderModule fragmentShader(prefix + "Data/Shaders/helloworld/shader.frag.spv");
-
-	pipeline = std::make_shared<GraphicPipeline>(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
-	pipeline->setVertexModule(vertexShader);
-	pipeline->setFragmentModule(fragmentShader);
-	pipeline->setVerticesInfo(triangle_vertex_buffer->getBindingDescriptions(), triangle_vertex_buffer->getAttributeDescriptions() ,triangle_vertex_buffer->primitiveTopology());
-	
-
-
-	SubpassAttachment SA;
-	SA.showOnScreen = true;
-	SA.nbColor = 1;
-	SA.storeColor = true;
-	SA.useDepth = true;
-	SA.showOnScreenIndex = 0;
-
-	RenderPass* pass = new RenderPass();
-	pass->addSubPass({ pipeline }, SA);
-	pass->addDependencies(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT);
-	pass->addDependencies(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
-	pass->compile();
-
-	return pass;
-	
-}
-
-bool g_resize = false;
-void window_size_callback(GLFWwindow* window, int width, int height)
-{
-	g_resize = true;
-}
-
-
-
 int main() {
 
 	glfwInit();
-
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
 	GLFWwindow* window = glfwCreateWindow(512, 512, "LavaCake HelloWorld", nullptr, nullptr);
 
 	ErrorCheck::printError(true, 5);
-
-
-	glfwSetWindowSizeCallback(window, window_size_callback);
 	
 	GLFWSurfaceInitialisator surfaceInitialisator(window);
 
-	Device* d = Device::getDevice();
-	d->initDevices(0, 1, surfaceInitialisator);
-	SwapChain* s = SwapChain::getSwapChain();
-	s->init();
+	Device* device = Device::getDevice();
+	device->initDevices(0, 1, surfaceInitialisator);
 
-	VkExtent2D size = s->size();
-	GraphicQueue queue = d->getGraphicQueue(0);
-	PresentationQueue presentQueue = d->getPresentQueue();
+	SwapChain* swapChain = SwapChain::getSwapChain();
+	swapChain->init();
+
 	CommandBuffer  commandBuffer;
 	std::shared_ptr<Semaphore> semaphore = std::make_shared<Semaphore>();
 
+	GraphicQueue graphicQueue = device->getGraphicQueue(0);
+	PresentationQueue presentQueue = device->getPresentQueue();
 
-	vertexFormat format = vertexFormat({ POS3,COL3 });
+	vertexFormat format ({ POS3,COL3 });
 
 	//we create a indexed triangle mesh with the desired format
 	std::shared_ptr<Mesh_t> triangle = std::make_shared<IndexedMesh<TRIANGLE>>(format);
@@ -97,65 +43,76 @@ int main() {
 	triangle->appendVertex({ 0.75f,	0.75f , 0.0f, 0.0f , 1.0f	, 0.0f });
 	triangle->appendVertex({ 0.0f , -0.75f, 0.0f, 0.0f , 0.0f	, 1.0f });
 
-
 	// we link the 3 vertices to define a triangle
 	triangle->appendIndex(0);
 	triangle->appendIndex(1);
 	triangle->appendIndex(2);
 
-
 	//creating an allocating a vertex buffer
-	triangle_vertex_buffer = std::make_shared<VertexBuffer>(queue, commandBuffer, std::vector<std::shared_ptr<Mesh_t>>({ triangle }) );
+	std::shared_ptr<VertexBuffer> triangle_vertex_buffer = std::make_shared<VertexBuffer>(
+		graphicQueue,
+		commandBuffer, 
+		std::vector<std::shared_ptr<Mesh_t>>({ triangle }) 
+	);
 
-	auto pass = createRenderPass(queue, commandBuffer);
-	
-	FrameBuffer* frameBuffers = new FrameBuffer(size.width, size.height);
-	pass->prepareOutputFrameBuffer(queue, commandBuffer, *frameBuffers);
+	VertexShaderModule vertexShader(prefix + "Data/Shaders/helloworld/shader.vert.spv");
+	FragmentShaderModule fragmentShader(prefix + "Data/Shaders/helloworld/shader.frag.spv");
+
+	VkExtent2D size = swapChain->size();
+
+	std::shared_ptr<GraphicPipeline> graphicPipeline = std::make_shared<GraphicPipeline>(
+		vec3f({ 0,0,0 }), 
+		vec3f({ float(size.width),float(size.height),1.0f }), 
+		vec2f({ 0,0 }), 
+		vec2f({ float(size.width),float(size.height) })
+	);
+
+	graphicPipeline->setVertexModule(vertexShader);
+	graphicPipeline->setFragmentModule(fragmentShader);
+	graphicPipeline->setVertices({ triangle_vertex_buffer });
+
+	RenderPass renderPass;
+
+	SubpassAttachment SA;
+	SA.showOnScreen = true;
+	SA.nbColor = 1;
+	SA.storeColor = true;
+	SA.showOnScreenIndex = 0;
+
+	renderPass.addSubPass({ graphicPipeline }, SA);
+	renderPass.compile();
+
+	FrameBuffer frameBuffer =  FrameBuffer(size.width, size.height);
+	renderPass.prepareOutputFrameBuffer(graphicQueue, commandBuffer, frameBuffer);
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
-	
-		VkDevice logical = d->getLogicalDevice();
-		
 
-		commandBuffer.wait(2000000000);
+		commandBuffer.wait();
 		commandBuffer.resetFence();
 
-		if (g_resize) {
-			d->waitForAllCommands();
-			s->resize();
-			size = s->size();
-			delete pass;
-			pass = createRenderPass(queue, commandBuffer);
-			delete frameBuffers;
-			frameBuffers = new FrameBuffer(size.width, size.height);
-			pass->prepareOutputFrameBuffer(queue, commandBuffer, *frameBuffers);
+		const SwapChainImage& image = swapChain->acquireImage();
+		std::vector<waitSemaphoreInfo> waitSemaphoreInfos = {};
+		waitSemaphoreInfos.push_back({
+			image.getSemaphore(),                           // VkSemaphore            Semaphore
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT	  // VkPipelineStageFlags   WaitingStage
+		});
 
-			g_resize = false;
-		}
-
-		const SwapChainImage& image = s->acquireImage();
-
-		std::vector<waitSemaphoreInfo> wait_semaphore_infos = {};
-		wait_semaphore_infos.push_back({
-			image.getSemaphore(),                     // VkSemaphore            Semaphore
-			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
-			});
-
-		pipeline->setVertices({ triangle_vertex_buffer });
-
+		renderPass.setSwapChainImage(frameBuffer, image);
 		commandBuffer.beginRecord();
-
 		
-		pass->setSwapChainImage(*frameBuffers, image);
-
-		pass->draw(commandBuffer, *frameBuffers, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
+		renderPass.draw(
+			commandBuffer, 
+			frameBuffer, 
+			vec2u({ 0,0 }), 
+			vec2u({ size.width, size.height }), 
+			{ { 0.1f, 0.2f, 0.3f, 1.0f } }
+		);
 
 		commandBuffer.endRecord();
+		commandBuffer.submit(graphicQueue, waitSemaphoreInfos, { semaphore });
 
-		commandBuffer.submit(queue, wait_semaphore_infos, { semaphore });
-
-		s->presentImage(presentQueue, image, { semaphore });
+		swapChain->presentImage(presentQueue, image, { semaphore });
 	}
-	d->waitForAllCommands();
+	device->waitForAllCommands();
 }

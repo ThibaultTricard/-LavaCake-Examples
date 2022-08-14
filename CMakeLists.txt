@@ -56,6 +56,18 @@ AutoSPIRV(HelloWorld)
 target_link_libraries( HelloWorld LavaCake )
 set_property( TARGET HelloWorld PROPERTY FOLDER "Samples" )
 
+#Array Sum
+clearShader()
+file( GLOB SHADER_SOURCE_FILES "Samples/Data/Shaders/ArraySum/*")
+FOREACH( shader ${SHADER_SOURCE_FILES} )
+	string(REGEX MATCH "[A-Za-z0-9_\\-]*\\.[A-Za-z0-9]*" FILENAME ${shader})
+	addShader(${shader} ${CMAKE_CURRENT_BINARY_DIR}/Data/Shaders/ArraySum/${FILENAME}.spv spv1.3)
+endforeach()
+add_executable( ArraySum  "Samples/Source Files/ArraySum/main.cpp")
+AutoSPIRV(ArraySum)
+target_link_libraries( ArraySum LavaCake )
+set_property( TARGET ArraySum PROPERTY FOLDER "Samples" )
+
 
 #ImGui
 clearShader()
