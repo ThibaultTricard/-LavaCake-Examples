@@ -110,7 +110,8 @@ void main(){
 			vec3 d = TBN*s;
 
 			traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, origin, tmin, d, tmax, 0);
-			float theta = dot(dirI, d);
+			vec3 rd = reflect(d,n);
+			float theta = dot(dirI, rd);
 			L= L + hitValue.color* theta;
 		}
 

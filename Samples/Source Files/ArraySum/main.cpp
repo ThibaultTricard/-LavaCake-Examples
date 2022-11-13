@@ -1,5 +1,3 @@
-#define LAVACAKE_WINDOW_MANAGER_HEADLESS
-
 #include <LavaCake/Framework/Framework.h>
 using namespace LavaCake::Framework;
 
@@ -9,15 +7,16 @@ using namespace LavaCake::Framework;
 #ifdef __APPLE__
 std::string prefix = "../";
 #else
-std::string prefix = "";
+std::string prefix = "../";
 #endif
 
 int main() {
   Device* d = Device::getDevice();
-  d->initDevices(1, 1);
+  d->initDevices(1, 0);
 
   ComputeQueue computeQueue = d->getComputeQueue(0);
-  ComputePipeline sumPipeline;
+  CommandBuffer commandBuffer;
+
   std::vector<float> A(dataSize);
   std::vector<float> B(dataSize);
   for (int i = 0; i < dataSize; i++) {
@@ -25,10 +24,15 @@ int main() {
     B[i] = i * 2;
   }
 
-  CommandBuffer commandBuffer;
   Buffer ABuffer(computeQueue, commandBuffer, A, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT);
   Buffer BBuffer(computeQueue, commandBuffer, B, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT);
   Buffer CBuffer(dataSize * sizeof(float), VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT| VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+
+
+  ComputePipeline sumPipeline;
+
+  ComputeShaderModule sumShader(prefix + "Data/Shaders/ArraySum/sum.comp.spv");
+  sumPipeline.setComputeModule(sumShader);
 
   std::shared_ptr <DescriptorSet>  descriptorSet = std::make_shared<DescriptorSet>();
 
@@ -38,10 +42,7 @@ int main() {
 
   sumPipeline.setDescriptorSet(descriptorSet);
 
-  ComputeShaderModule sumShader(prefix + "Data/Shaders/ArraySum/sum.comp.spv");
-  sumPipeline.setComputeModule(sumShader);
   sumPipeline.compile();
-
 
   commandBuffer.beginRecord();
   sumPipeline.compute(commandBuffer, dataSize / 32, 1, 1);

@@ -50,13 +50,13 @@ int main() {
 	std::array<std::array<float, 8>,4> materials;
 
 	//light material
-	materials[0] = std::array<float,8>({ 0.0f,0.0f,0.0f,1.0f,1.0f,1.0f,0.0f, 0.0f });
+	materials[0] = std::array<float, 8>({ 0.0f,0.0f,0.0f,1.0f,1.0f,1.0f,0.0f,0.0f});
 	//white material
-	materials[1] = std::array<float, 8>({ 1.0f,.824f,0.549f,0.0f,0.0f,0.0f,0.0f, 0.0f });
+	materials[1] = std::array<float, 8>({ 1.0f,.824f,0.549f,0.0f,0.0f,0.0f,0.0f,0.0f});
 	//green material
-	materials[2] =  std::array<float, 8>({ 0.0f,0.4f,0.0f,0.0f,0.0f,0.0f,0.0f, 0.0f });
+	materials[2] = std::array<float, 8>({ 0.0f,0.4f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f});
 	//red material
-	materials[3] = std::array<float, 8>({ 0.7f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f, 0.0f });
+	materials[3] = std::array<float, 8>({ 0.7f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f});
 
 	UniformBuffer materialBuffer;
 	materialBuffer.addVariable("material",materials);
@@ -92,7 +92,7 @@ int main() {
 	float ligthY_min = 400.0f;
 	float ligthY_max = ligthY_min + 130.0f;
 
-	float ligthZ_min = 10.0f;
+	float ligthZ_min = 100.0f;
 	float ligthZ_max = ligthZ_min + 105;
 
 	std::array<vec4f,64> lightSample;
