@@ -8,7 +8,7 @@ using namespace LavaCake::Framework;
 #ifdef __APPLE__
 std::string prefix ="../";
 #else
-std::string prefix ="";
+std::string prefix ="../";
 #endif
 
 int main() {
@@ -40,8 +40,8 @@ int main() {
 
 	//adding 3 vertices
 	triangle->appendVertex({ -0.75f, 0.75f, 0.0f, 1.0f , 0.0f , 0.0f });
-	triangle->appendVertex({ 0.75f,	0.75f , 0.0f, 0.0f , 1.0f	, 0.0f });
-	triangle->appendVertex({ 0.0f , -0.75f, 0.0f, 0.0f , 0.0f	, 1.0f });
+	triangle->appendVertex({ 0.75f,	0.75f , 0.0f, 0.0f , 1.0f , 0.0f });
+	triangle->appendVertex({ 0.0f , -0.75f, 0.0f, 0.0f , 0.0f , 1.0f });
 
 	// we link the 3 vertices to define a triangle
 	triangle->appendIndex(0);
@@ -49,7 +49,7 @@ int main() {
 	triangle->appendIndex(2);
 
 	//creating an allocating a vertex buffer
-	std::shared_ptr<VertexBuffer> triangle_vertex_buffer = std::make_shared<VertexBuffer>(
+	VertexBuffer triangle_vertex_buffer (
 		graphicQueue,
 		commandBuffer, 
 		std::vector<std::shared_ptr<Mesh_t>>({ triangle }) 
@@ -60,16 +60,23 @@ int main() {
 
 	VkExtent2D size = swapChain->size();
 
-	std::shared_ptr<GraphicPipeline> graphicPipeline = std::make_shared<GraphicPipeline>(
+	GraphicPipeline graphicPipeline(
 		vec3f({ 0,0,0 }), 
 		vec3f({ float(size.width),float(size.height),1.0f }), 
 		vec2f({ 0,0 }), 
 		vec2f({ float(size.width),float(size.height) })
 	);
 
-	graphicPipeline->setVertexModule(vertexShader);
-	graphicPipeline->setFragmentModule(fragmentShader);
-	graphicPipeline->setVertices({ triangle_vertex_buffer });
+	graphicPipeline.setVertexModule(vertexShader);
+	graphicPipeline.setFragmentModule(fragmentShader);
+	//graphicPipeline->setVertices({ triangle_vertex_buffer });
+	graphicPipeline.setVerticesInfo(
+		triangle_vertex_buffer.getBindingDescriptions(), 
+		triangle_vertex_buffer.getAttributeDescriptions(), 
+		triangle_vertex_buffer.primitiveTopology());
+	
+
+	graphicPipeline.setDescriptorLayout(generateEmptyLayout());
 
 	RenderPass renderPass;
 
@@ -79,8 +86,12 @@ int main() {
 	SA.storeColor = true;
 	SA.showOnScreenIndex = 0;
 
-	renderPass.addSubPass({ graphicPipeline }, SA);
+	uint32_t passNumber = renderPass.addSubPass(SA);
+	graphicPipeline.setSubPassNumber(passNumber);
+
 	renderPass.compile();
+
+	graphicPipeline.compile(renderPass.getHandle(),SA.nbColor);
 
 	FrameBuffer frameBuffer =  FrameBuffer(size.width, size.height);
 	renderPass.prepareOutputFrameBuffer(graphicQueue, commandBuffer, frameBuffer);
@@ -100,15 +111,20 @@ int main() {
 
 		renderPass.setSwapChainImage(frameBuffer, image);
 		commandBuffer.beginRecord();
-		
-		renderPass.draw(
-			commandBuffer, 
+		renderPass.begin(commandBuffer, 
 			frameBuffer, 
 			vec2u({ 0,0 }), 
 			vec2u({ size.width, size.height }), 
-			{ { 0.1f, 0.2f, 0.3f, 1.0f } }
-		);
+			{ { 0.1f, 0.2f, 0.3f, 1.0f } });
 
+		graphicPipeline.bindPipeline(commandBuffer);
+
+		bindVertexBuffer(commandBuffer, *triangle_vertex_buffer.getVertexBuffer());
+		bindIndexBuffer(commandBuffer, *triangle_vertex_buffer.getIndexBuffer());
+
+		drawIndexed(commandBuffer, triangle_vertex_buffer.getIndicesNumber());
+		
+		renderPass.end(commandBuffer);
 		commandBuffer.endRecord();
 		commandBuffer.submit(graphicQueue, waitSemaphoreInfos, { semaphore });
 

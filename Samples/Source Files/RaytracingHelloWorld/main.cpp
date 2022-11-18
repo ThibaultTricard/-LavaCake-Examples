@@ -84,16 +84,20 @@ int main() {
 
 	proj.end();
 
+	RayGenShaderModule rayGenShaderModule("../Data/Shaders/RaytracingHelloWorld/raygen.rgen.spv");
+	MissShaderModule  missShaderModule("../Data/Shaders/RaytracingHelloWorld/miss.rmiss.spv");
+	ClosestHitShaderModule closesHitShaderModule("../Data/Shaders/RaytracingHelloWorld/closesthit.rchit.spv");
 
-	RayGenShaderModule rayGenShaderModule("Data/Shaders/RaytracingHelloWorld/raygen.rgen.spv");
-	MissShaderModule  missShaderModule("Data/Shaders/RaytracingHelloWorld/miss.rmiss.spv");
-	ClosestHitShaderModule closesHitShaderModule("Data/Shaders/RaytracingHelloWorld/closesthit.rchit.spv");
+	DescriptorSet RTXset;
+
+	RTXset.addAccelerationStructure(tlAS, VK_SHADER_STAGE_RAYGEN_BIT_KHR , 0);
+	RTXset.addStorageImage(output, VK_SHADER_STAGE_RAYGEN_BIT_KHR, 1);
+	RTXset.addUniformBuffer(proj, VK_SHADER_STAGE_RAYGEN_BIT_KHR, 2);
+	RTXset.compile();
 
 	RayTracingPipeline rtPipeline(vec2u({ size.width, size.height }));
-	rtPipeline.addAccelerationStructure(tlAS, VK_SHADER_STAGE_RAYGEN_BIT_KHR , 0);
-	rtPipeline.addStorageImage(output, VK_SHADER_STAGE_RAYGEN_BIT_KHR, 1);
-	rtPipeline.addUniformBuffer(proj, VK_SHADER_STAGE_RAYGEN_BIT_KHR, 2);
-
+	
+	rtPipeline.setDescriptorLayout(RTXset.getLayout());
 	rtPipeline.addRayGenModule(rayGenShaderModule);
 	rtPipeline.addMissModule(missShaderModule);
 
@@ -103,10 +107,8 @@ int main() {
 
 	rtPipeline.compile(queue, commandBuffer);
 
-
 	//PostProcessQuad
 	std::shared_ptr<Mesh_t> quad = std::make_shared<IndexedMesh<TRIANGLE>>(IndexedMesh<TRIANGLE>(P3UV));
-
 
 	quad->appendVertex({ -1.0,-1.0,0.0,0.0,0.0 });
 	quad->appendVertex({ -1.0, 1.0,0.0,0.0,1.0 });
@@ -121,29 +123,28 @@ int main() {
 	quad->appendIndex(3);
 	quad->appendIndex(0);
 
-
-
 	std::shared_ptr<VertexBuffer> quad_vertex_buffer = std::make_shared<VertexBuffer>(VertexBuffer(queue, commandBuffer, { quad }));
-
 
 	UniformBuffer passNumber;
 	passNumber.addVariable("dimention", LavaCake::vec2u({ size.width, size.height }));
 	passNumber.end();
 
-
-
+	DescriptorSet drawset;
+	drawset.addStorageImage(output, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
+	drawset.addUniformBuffer(passNumber, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
+	drawset.compile();
+	
 	//renderPass
 	RenderPass* showPass = new RenderPass();
 
 	std::shared_ptr<GraphicPipeline> pipeline = std::make_shared<GraphicPipeline>(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
-	VertexShaderModule vertexShader("Data/Shaders/RaytracingHelloWorld/shader.vert.spv");
-	FragmentShaderModule fragmentShader("Data/Shaders/RaytracingHelloWorld/shader.frag.spv");
+	VertexShaderModule vertexShader("../Data/Shaders/RaytracingHelloWorld/shader.vert.spv");
+	FragmentShaderModule fragmentShader("../Data/Shaders/RaytracingHelloWorld/shader.frag.spv");
 	pipeline->setVertexModule(vertexShader);
 	pipeline->setFragmentModule(fragmentShader);
 	pipeline->setVerticesInfo(quad_vertex_buffer->getBindingDescriptions(), quad_vertex_buffer->getAttributeDescriptions(), quad_vertex_buffer->primitiveTopology());
-	pipeline->setVertices({ quad_vertex_buffer });
-	pipeline->addStorageImage(output, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
-	pipeline->addUniformBuffer(passNumber, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
+	
+	pipeline->setDescriptorLayout(drawset.getLayout());
 
 	SubpassAttachment SA;
 	SA.showOnScreen = true;
@@ -152,9 +153,11 @@ int main() {
 	SA.useDepth = true;
 	SA.showOnScreenIndex = 0;
 
-	showPass->addSubPass({ pipeline }, SA);
+	pipeline->setSubPassNumber(showPass->addSubPass( SA));
 
 	showPass->compile();
+
+	pipeline->compile(showPass->getHandle(), SA.nbColor);
 
 	FrameBuffer* frameBuffer = new FrameBuffer(s->size().width, s->size().height);
 	showPass->prepareOutputFrameBuffer(queue, commandBuffer,*frameBuffer);
@@ -173,13 +176,17 @@ int main() {
 		commandBuffer.beginRecord();
 
 		proj.update(commandBuffer);
+
+		rtPipeline.bindPipeline(commandBuffer);
+
+		rtPipeline.bindDescriptorSet(commandBuffer, RTXset);
+
 		rtPipeline.trace(commandBuffer);
 		commandBuffer.endRecord();
 
 		commandBuffer.submit(queue, {}, { });
 
-		
-		commandBuffer.wait(2000000000);
+		commandBuffer.wait();
 		commandBuffer.resetFence();
 
 		const SwapChainImage& image = s->acquireImage();
@@ -196,9 +203,17 @@ int main() {
 		showPass->setSwapChainImage(*frameBuffer, image);
 
 
-		showPass->draw(commandBuffer, *frameBuffer, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
+		showPass->begin( commandBuffer , *frameBuffer, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
 
-		
+		pipeline->bindPipeline(commandBuffer);
+		pipeline->bindDescriptorSet(commandBuffer, drawset);
+
+		bindVertexBuffer(commandBuffer, *quad_vertex_buffer->getVertexBuffer());
+		bindIndexBuffer(commandBuffer, *quad_vertex_buffer->getIndexBuffer());
+
+		drawIndexed(commandBuffer, quad_vertex_buffer->getIndicesNumber());
+
+		showPass->end(commandBuffer);
 		commandBuffer.endRecord();
 
 		commandBuffer.submit(queue, wait_semaphore_infos, { sempahore });

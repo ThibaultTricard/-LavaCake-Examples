@@ -119,7 +119,8 @@ int main() {
 	shadowPipeline->setVerticesInfo(scene_vertex_buffer->getBindingDescriptions(), scene_vertex_buffer->getAttributeDescriptions(), scene_vertex_buffer->primitiveTopology());
 
 	
-	shadowPipeline->setVertices({ scene_vertex_buffer });
+	DescriptorSet shadowDescriptor;
+
 	shadowPipeline->addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
 
 	SubpassAttachment SA;

@@ -34,17 +34,21 @@ int main() {
   ComputeShaderModule sumShader(prefix + "Data/Shaders/ArraySum/sum.comp.spv");
   sumPipeline.setComputeModule(sumShader);
 
-  std::shared_ptr <DescriptorSet>  descriptorSet = std::make_shared<DescriptorSet>();
+  DescriptorSet  descriptorSet;
 
-  descriptorSet->addTexelBuffer(ABuffer, VK_SHADER_STAGE_COMPUTE_BIT, 0);
-  descriptorSet->addTexelBuffer(BBuffer, VK_SHADER_STAGE_COMPUTE_BIT, 1);
-  descriptorSet->addTexelBuffer(CBuffer, VK_SHADER_STAGE_COMPUTE_BIT, 2);
+  descriptorSet.addTexelBuffer(ABuffer, VK_SHADER_STAGE_COMPUTE_BIT, 0);
+  descriptorSet.addTexelBuffer(BBuffer, VK_SHADER_STAGE_COMPUTE_BIT, 1);
+  descriptorSet.addTexelBuffer(CBuffer, VK_SHADER_STAGE_COMPUTE_BIT, 2);
 
-  sumPipeline.setDescriptorSet(descriptorSet);
+  descriptorSet.compile();
+
+  sumPipeline.setDescriptorLayout(descriptorSet.getLayout());
 
   sumPipeline.compile();
 
   commandBuffer.beginRecord();
+  sumPipeline.bindPipeline(commandBuffer);
+  sumPipeline.bindDescriptorSet(commandBuffer,descriptorSet);
   sumPipeline.compute(commandBuffer, dataSize / 32, 1, 1);
   commandBuffer.endRecord();
   commandBuffer.submit(computeQueue, {}, {});

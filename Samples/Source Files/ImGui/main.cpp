@@ -9,7 +9,7 @@ using namespace LavaCake::Core;
 #ifdef __APPLE__
 std::string prefix ="../";
 #else
-std::string prefix ="";
+std::string prefix ="../";
 #endif
 
 int main() {
@@ -66,9 +66,7 @@ int main() {
 	pipeline->setFragmentModule(fragmentShader);
 	pipeline->setVerticesInfo(triangle_vertex_buffer->getBindingDescriptions(), triangle_vertex_buffer->getAttributeDescriptions(), triangle_vertex_buffer->primitiveTopology());
 
-	pipeline->setVertices({ triangle_vertex_buffer });
-
-
+	pipeline->setDescriptorLayout(generateEmptyLayout());
 
 	SubpassAttachment SA;
 	SA.showOnScreen = true;
@@ -77,11 +75,19 @@ int main() {
 	SA.useDepth = true;
 	SA.showOnScreenIndex = 0;
 
-	pass->addSubPass({ pipeline, gui->getPipeline()}, SA);
+	uint32_t subPassNumber= pass->addSubPass(SA);
+	pipeline->setSubPassNumber(subPassNumber);
+	gui->getPipeline()->setSubPassNumber(subPassNumber);
+
 	pass->addDependencies(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 	pass->addDependencies(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 
 	pass->compile();
+
+	pipeline->compile(pass->getHandle(),SA.nbColor);
+	gui->getPipeline()->compile(pass->getHandle(),SA.nbColor);
+
+
 
 	std::vector<FrameBuffer*> frameBuffers;
 	for (int i = 0; i < nbFrames; i++) {
@@ -154,17 +160,10 @@ int main() {
 			ImGui::End();
 		}
 
-		
 		gui->prepareGui(d->getGraphicQueue(0), commandBuffer[f]);
-		
 		
 		VkDevice logical = d->getLogicalDevice();
 		const SwapChainImage& image = s->acquireImage();
-
-
-	
-
-
 
 		std::vector<waitSemaphoreInfo> wait_semaphore_infos = {};
 		wait_semaphore_infos.push_back({
@@ -180,7 +179,17 @@ int main() {
 
 		pass->setSwapChainImage(*frameBuffers[f], image);
 
-		pass->draw(commandBuffer[f], *frameBuffers[f], vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
+		pass->begin(commandBuffer[f], *frameBuffers[f], vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
+
+		pipeline->bindPipeline(commandBuffer[f]);
+
+		bindVertexBuffer(commandBuffer[f], *triangle_vertex_buffer->getVertexBuffer());
+
+		draw(commandBuffer[f], triangle_vertex_buffer->getVerticiesNumber());
+
+
+		gui->drawGui(commandBuffer[f]);
+		pass->end(commandBuffer[f]);
 
 
 		commandBuffer[f].endRecord();

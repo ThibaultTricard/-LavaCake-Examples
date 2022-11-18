@@ -10,7 +10,7 @@ using namespace LavaCake::Core;
 #ifdef __APPLE__
 std::string prefix ="../";
 #else
-std::string prefix ="";
+std::string prefix ="../";
 #endif
 
 int main() {
@@ -58,8 +58,7 @@ int main() {
 	quad->appendIndex(3);
 	quad->appendIndex(0);
 
-	std::shared_ptr<VertexBuffer> quad_vertex_buffer = std::make_shared<Framework::VertexBuffer>(queue, commandBuffer, 
-		std::vector<std::shared_ptr<Mesh_t>>({ quad }));
+	VertexBuffer quad_vertex_buffer(queue, commandBuffer, std::vector<std::shared_ptr<Mesh_t>>({ quad }));
 
 	//texture map
 	Image  input = createTextureBuffer(queue, commandBuffer, prefix+"Data/Textures/mandrill.png", 4);
@@ -77,42 +76,58 @@ int main() {
 	sizeBuffer.end();
 
 	//pass1 
-	Framework::ComputePipeline* computePipeline1 = new Framework::ComputePipeline();
+	Framework::ComputePipeline computePipeline1;
 
 	ComputeShaderModule computeFourier1(prefix+"Data/Shaders/FourierTransform/fourier_pass1.comp.spv");
-	computePipeline1->setComputeModule(computeFourier1);
+	computePipeline1.setComputeModule(computeFourier1);
 
-	computePipeline1->addTextureBuffer(input, VK_SHADER_STAGE_COMPUTE_BIT, 0);
-	computePipeline1->addTexelBuffer(output_pass1, VK_SHADER_STAGE_COMPUTE_BIT, 1);
-	computePipeline1->addUniformBuffer(sizeBuffer, VK_SHADER_STAGE_COMPUTE_BIT, 2);
 
-	computePipeline1->compile();
+	DescriptorSet firstPassSet;
+	firstPassSet.addTextureBuffer(input, VK_SHADER_STAGE_COMPUTE_BIT, 0);
+	firstPassSet.addTexelBuffer(output_pass1, VK_SHADER_STAGE_COMPUTE_BIT, 1);
+	firstPassSet.addUniformBuffer(sizeBuffer, VK_SHADER_STAGE_COMPUTE_BIT, 2);
+
+	firstPassSet.compile();
+	
+	computePipeline1.setDescriptorLayout(firstPassSet.getLayout());
+	computePipeline1.compile();
 
 	//pass2
-	Framework::ComputePipeline* computePipeline2 = new Framework::ComputePipeline();
+	Framework::ComputePipeline computePipeline2 = Framework::ComputePipeline();
 
 	ComputeShaderModule computeFourier2(prefix+"Data/Shaders/FourierTransform/fourier_pass2.comp.spv");
-	computePipeline2->setComputeModule(computeFourier2);
+	computePipeline2.setComputeModule(computeFourier2);
 
-	computePipeline2->addTexelBuffer(output_pass1, VK_SHADER_STAGE_COMPUTE_BIT, 0);
-	computePipeline2->addTexelBuffer(output_pass2, VK_SHADER_STAGE_COMPUTE_BIT, 1);
-	computePipeline2->addUniformBuffer(sizeBuffer, VK_SHADER_STAGE_COMPUTE_BIT, 2);
+	DescriptorSet secondPassSet;
 
-	computePipeline2->compile();
+	
+	secondPassSet.addTexelBuffer(output_pass1, VK_SHADER_STAGE_COMPUTE_BIT, 0);
+	secondPassSet.addTexelBuffer(output_pass2, VK_SHADER_STAGE_COMPUTE_BIT, 1);
+	secondPassSet.addUniformBuffer(sizeBuffer, VK_SHADER_STAGE_COMPUTE_BIT, 2);
+	secondPassSet.compile();
+
+	computePipeline2.setDescriptorLayout(secondPassSet.getLayout());
+
+	computePipeline2.compile();
 
 
 	//renderPass
-	Framework::RenderPass* showPass = new Framework::RenderPass();
+	Framework::RenderPass showPass;
 
-	std::shared_ptr < GraphicPipeline > pipeline = std::make_shared < GraphicPipeline >(vec3f({ 0,0,0 }) , vec3f({ float(size.width),float(size.height),1.0f }) , vec2f({ 0,0 }) , vec2f({ float(size.width),float(size.height) }));
+	GraphicPipeline pipeline = GraphicPipeline (vec3f({ 0,0,0 }) , vec3f({ float(size.width),float(size.height),1.0f }) , vec2f({ 0,0 }) , vec2f({ float(size.width),float(size.height) }));
 	VertexShaderModule vertexShader(prefix+"Data/Shaders/FourierTransform/shader.vert.spv");
 	FragmentShaderModule fragmentShader(prefix+"Data/Shaders/FourierTransform/shader.frag.spv");
-	pipeline->setVertexModule(vertexShader);
-	pipeline->setFragmentModule(fragmentShader);
-	pipeline->setVerticesInfo(quad_vertex_buffer->getBindingDescriptions(), quad_vertex_buffer->getAttributeDescriptions(), quad_vertex_buffer->primitiveTopology());
-	pipeline->setVertices({ quad_vertex_buffer });
-	pipeline->addTexelBuffer(output_pass2, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
-	pipeline->addUniformBuffer(sizeBuffer, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
+	pipeline.setVertexModule(vertexShader);
+	pipeline.setFragmentModule(fragmentShader);
+	pipeline.setVerticesInfo(quad_vertex_buffer.getBindingDescriptions(), quad_vertex_buffer.getAttributeDescriptions(), quad_vertex_buffer.primitiveTopology());
+
+	DescriptorSet renderSet;
+
+	renderSet.addTexelBuffer(output_pass2, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
+	renderSet.addUniformBuffer(sizeBuffer, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
+	renderSet.compile();
+
+	pipeline.setDescriptorLayout(renderSet.getLayout());
 
 	SubpassAttachment SA;
 	SA.showOnScreen = true;
@@ -121,27 +136,32 @@ int main() {
 	SA.useDepth = true;
 	SA.showOnScreenIndex = 0;
 
-	showPass->addSubPass({ pipeline }, SA);
+	uint32_t subass_count = showPass.addSubPass(SA);
+	pipeline.setSubPassNumber(subass_count);
 
-	showPass->compile();
+	showPass.compile();
 
-
+	pipeline.compile(showPass.getHandle(),SA.nbColor);
 
 	Framework::FrameBuffer frameBuffers(s->size().width, s->size().height);
 
-	showPass->prepareOutputFrameBuffer(queue, commandBuffer, frameBuffers);
+	showPass.prepareOutputFrameBuffer(queue, commandBuffer, frameBuffers);
 	
 
-	commandBuffer.wait(2000000000);
+	commandBuffer.wait();
 	commandBuffer.resetFence();
 	commandBuffer.beginRecord();
 
 	sizeBuffer.update(commandBuffer);
 
-	computePipeline1->compute(commandBuffer, input.width(), input.height(), 1);
+	computePipeline1.bindPipeline(commandBuffer);
+	computePipeline1.bindDescriptorSet(commandBuffer, firstPassSet);
+	computePipeline1.compute(commandBuffer, input.width(), input.height(), 1);
 
-	
-	computePipeline2->compute(commandBuffer, input.width(), input.height(), 1);
+
+	computePipeline2.bindPipeline(commandBuffer);
+	computePipeline2.bindDescriptorSet(commandBuffer, secondPassSet);
+	computePipeline2.compute(commandBuffer, input.width(), input.height(), 1);
 
 
 	commandBuffer.endRecord();
@@ -167,10 +187,19 @@ int main() {
 		commandBuffer.beginRecord();
 
 
-		showPass->setSwapChainImage(frameBuffers, image);
+		showPass.setSwapChainImage(frameBuffers, image);
 
+		showPass.begin(commandBuffer, frameBuffers, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
 
-		showPass->draw(commandBuffer, frameBuffers, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
+		pipeline.bindPipeline(commandBuffer);
+		
+		pipeline.bindDescriptorSet(commandBuffer,renderSet);
+		bindVertexBuffer(commandBuffer, *quad_vertex_buffer.getVertexBuffer());
+		bindIndexBuffer(commandBuffer, *quad_vertex_buffer.getIndexBuffer());
+
+		drawIndexed(commandBuffer, quad_vertex_buffer.getIndicesNumber());
+		
+		showPass.end(commandBuffer);
 
 		commandBuffer.endRecord();
 
