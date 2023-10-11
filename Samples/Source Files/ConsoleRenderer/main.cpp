@@ -126,10 +126,10 @@ int main() {
 
 	
 
-	SubpassAttachment SA;
-	SA.nbColor = 0;
-	SA.useDepth = true;
-	SA.storeDepth = true;
+	SubPassAttachments SA;
+  	SA.setDepthFormat(VK_FORMAT_D16_UNORM);
+  	SA.m_depthAttachments.m_attachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+
 
 	shadowMapPass.addSubPass( SA);
 	shadowMapPass.addDependencies(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT);
@@ -153,10 +153,11 @@ int main() {
 	renderPipeline->setVerticesInfo(scene_vertex_buffer->getBindingDescriptions(), scene_vertex_buffer->getAttributeDescriptions(), scene_vertex_buffer->primitiveTopology());
 	
 	
-	SubpassAttachment SA2;
-	SA2.nbColor = 1;
-	SA2.useDepth = true;
-	SA2.storeColor = true;
+	SubPassAttachments SA2;
+    SA2.addColorAttachment(VK_FORMAT_R32G32B32A32_SFLOAT);
+    SA2.setDepthFormat(VK_FORMAT_D16_UNORM);
+    SA2.m_depthAttachments.m_attachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+
 
 	renderPass.addSubPass(SA2);
 	//renderPass.addDependencies(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
@@ -178,12 +179,10 @@ int main() {
 
 
 
-	SubpassAttachment SA3;
-	SA3.showOnScreen = true;
-	SA3.nbColor = 1;
-	SA3.storeColor = true;
-	SA3.useDepth = true;
-	SA3.showOnScreenIndex = 0;
+  SubPassAttachments SA3;
+  SA3.addSwapChainImageAttachment(s->imageFormat());
+  SA3.setDepthFormat(VK_FORMAT_D16_UNORM);
+
 
 	consolePass.addSubPass(SA3);
 	consolePass.addDependencies(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
@@ -205,13 +204,14 @@ int main() {
 	shadowDescriptor.compile();
 
 	shadowPipeline->setDescriptorLayout(shadowDescriptor.getLayout());
-	shadowPipeline->compile(shadowMapPass.getHandle(),SA.nbColor);
+
+	shadowPipeline->compile(shadowMapPass.getHandle(),SA);
 
 	renderPipeline->setDescriptorLayout(shadowDescriptor.getLayout());
-	renderPipeline->compile(renderPass.getHandle(),SA2.nbColor);
+	renderPipeline->compile(renderPass.getHandle(),SA2);
 
 	consolePipeline->setDescriptorLayout(shadowDescriptor.getLayout());
-	consolePipeline->compile(consolePass.getHandle(),SA3.nbColor);
+	consolePipeline->compile(consolePass.getHandle(),SA3);
 
 
 

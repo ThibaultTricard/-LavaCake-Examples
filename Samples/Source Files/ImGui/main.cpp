@@ -68,14 +68,15 @@ int main() {
 
 	pipeline->setDescriptorLayout(generateEmptyLayout());
 
-	SubpassAttachment SA;
-	SA.showOnScreen = true;
-	SA.nbColor = 1;
-	SA.storeColor = true;
-	SA.useDepth = true;
-	SA.showOnScreenIndex = 0;
+  
+	SubPassAttachments attachment;
+  int index = attachment.addSwapChainImageAttachment(s->imageFormat());
+  attachment.m_attachments[index].m_blendState.blendEnable = VK_TRUE;
+  
+  attachment.setDepthFormat(VK_FORMAT_D16_UNORM);
+  attachment.m_depthAttachments.m_attachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 
-	uint32_t subPassNumber= pass->addSubPass(SA);
+	uint32_t subPassNumber= pass->addSubPass(attachment);
 	pipeline->setSubPassNumber(subPassNumber);
 	gui->getPipeline()->setSubPassNumber(subPassNumber);
 
@@ -84,8 +85,8 @@ int main() {
 
 	pass->compile();
 
-	pipeline->compile(pass->getHandle(),SA.nbColor);
-	gui->getPipeline()->compile(pass->getHandle(),SA.nbColor);
+	pipeline->compile(pass->getHandle(),attachment);
+	gui->getPipeline()->compile(pass->getHandle(),attachment);
 
 
 

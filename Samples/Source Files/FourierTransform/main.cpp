@@ -129,19 +129,17 @@ int main() {
 
 	pipeline.setDescriptorLayout(renderSet.getLayout());
 
-	SubpassAttachment SA;
-	SA.showOnScreen = true;
-	SA.nbColor = 1;
-	SA.storeColor = true;
-	SA.useDepth = true;
-	SA.showOnScreenIndex = 0;
+	SubPassAttachments SA;
+  SA.setDepthFormat(VK_FORMAT_D16_UNORM);
+  SA.addSwapChainImageAttachment(s->imageFormat());
+
 
 	uint32_t subass_count = showPass.addSubPass(SA);
 	pipeline.setSubPassNumber(subass_count);
 
 	showPass.compile();
 
-	pipeline.compile(showPass.getHandle(),SA.nbColor);
+	pipeline.compile(showPass.getHandle(),SA);
 
 	Framework::FrameBuffer frameBuffers(s->size().width, s->size().height);
 

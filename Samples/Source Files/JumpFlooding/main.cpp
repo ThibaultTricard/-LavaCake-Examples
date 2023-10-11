@@ -110,18 +110,16 @@ int main() {
 	pipeline->setVerticesInfo(quad_vertex_buffer->getBindingDescriptions(), quad_vertex_buffer->getAttributeDescriptions(), quad_vertex_buffer->primitiveTopology());
 	pipeline->setDescriptorLayout(jumpfloodingSet->getLayout());
 
-	SubpassAttachment SA;
-	SA.showOnScreen = true;
-	SA.nbColor = 1;
-	SA.storeColor = true;
-	SA.useDepth = true;
-	SA.showOnScreenIndex = 0;
+	SubPassAttachments SA;
+  	SA.addSwapChainImageAttachment(s->imageFormat());
+ 
 
 	showPass->addSubPass(SA);
 
 	showPass->compile();
 
-	pipeline->compile(showPass->getHandle(),SA.nbColor);
+
+	pipeline->compile(showPass->getHandle(),SA);
 
 	FrameBuffer frameBuffer(s->size().width, s->size().height);
 	showPass->prepareOutputFrameBuffer(graphicQueue, cmbBuff, frameBuffer);

@@ -81,19 +81,23 @@ int main() {
 	graphicPipeline.setDescriptorLayout(generateEmptyLayout());
 
 	RenderPass renderPass;
+  
+  SubPassAttachments subPass;
+  
+  subPass.addSwapChainImageAttachment(swapChain->imageFormat());
+  
+	//SubpassAttachment SA;
+	//SA.showOnScreen = true;
+	//SA.nbColor = 1;
+	//SA.storeColor = true;
+	//SA.showOnScreenIndex = 0;
 
-	SubpassAttachment SA;
-	SA.showOnScreen = true;
-	SA.nbColor = 1;
-	SA.storeColor = true;
-	SA.showOnScreenIndex = 0;
-
-	uint32_t passNumber = renderPass.addSubPass(SA);
+	uint32_t passNumber = renderPass.addSubPass(subPass);
 	graphicPipeline.setSubPassNumber(passNumber);
 
 	renderPass.compile();
 
-	graphicPipeline.compile(renderPass.getHandle(),SA.nbColor);
+	graphicPipeline.compile(renderPass.getHandle(),subPass);
 
 	FrameBuffer frameBuffer =  FrameBuffer(size.width, size.height);
 	renderPass.prepareOutputFrameBuffer(graphicQueue, commandBuffer, frameBuffer);
@@ -124,7 +128,7 @@ int main() {
 		bindVertexBuffer(commandBuffer, *triangle_vertex_buffer.getVertexBuffer());
 		bindIndexBuffer(commandBuffer, *triangle_vertex_buffer.getIndexBuffer());
 
-		drawIndexed(commandBuffer, triangle_vertex_buffer.getIndicesNumber());
+		drawIndexed(commandBuffer, static_cast<uint32_t>(triangle_vertex_buffer.getIndicesNumber()));
 		
 		renderPass.end(commandBuffer);
 		commandBuffer.endRecord();

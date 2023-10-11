@@ -110,12 +110,11 @@ int main() {
 	
 
 
-	SubpassAttachment SA;
-	SA.showOnScreen = true;
-	SA.nbColor = 1;
-	SA.storeColor = true;
-	SA.useDepth = true;
-	SA.showOnScreenIndex = 0;
+
+	SubPassAttachments SA;
+  	SA.addSwapChainImageAttachment(s->imageFormat());
+  	SA.setDepthFormat(VK_FORMAT_D16_UNORM);
+
 
 	RenderPass* pass = new RenderPass();
 	pass->addSubPass(SA);
@@ -123,9 +122,8 @@ int main() {
 	pass->addDependencies(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 	pass->compile();
 
-	pipeline->compile(pass->getHandle(), SA.nbColor);
+	pipeline->compile(pass->getHandle(), SA);
 
-	
 	FrameBuffer* frameBuffers = new FrameBuffer(size.width, size.height);
 	pass->prepareOutputFrameBuffer(queue, commandBuffer, *frameBuffers);
 
