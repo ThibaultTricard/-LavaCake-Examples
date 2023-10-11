@@ -9,7 +9,7 @@ using namespace LavaCake::Core;
 #ifdef __APPLE__
 std::string prefix ="../";
 #else
-std::string prefix ="../";
+std::string prefix ="./";
 #endif
 
 int main() {
@@ -100,7 +100,7 @@ int main() {
 		glfwPollEvents();
 		f++;
 		f = f % nbFrames;
-		commandBuffer[f].wait(2000000000);
+		commandBuffer[f].wait();
 		commandBuffer[f].resetFence();
 
 
@@ -201,6 +201,8 @@ int main() {
 
 		debug++;
 	}
-	d->waitForAllCommands();
+	
+	commandBuffer[f].wait();
+	commandBuffer[f].resetFence();
 	
 }

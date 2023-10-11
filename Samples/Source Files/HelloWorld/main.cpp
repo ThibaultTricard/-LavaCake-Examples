@@ -1,5 +1,7 @@
 #define LAVACAKE_WINDOW_MANAGER_GLFW
 #include <LavaCake/Framework/Framework.h> 
+#include <LavaCake/Helpers/ABBox.h> 
+
 
 using namespace LavaCake;
 using namespace LavaCake::Geometry;
@@ -8,7 +10,7 @@ using namespace LavaCake::Framework;
 #ifdef __APPLE__
 std::string prefix ="../";
 #else
-std::string prefix ="../";
+std::string prefix ="./";
 #endif
 
 int main() {

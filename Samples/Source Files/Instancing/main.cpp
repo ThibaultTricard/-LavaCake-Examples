@@ -18,38 +18,7 @@ std::shared_ptr < VertexBuffer > triangle_vertex_buffer;
 std::vector< std::shared_ptr< PushConstant>  > constants(3);
 
 RenderPass* createRenderPass(const Queue& queue, CommandBuffer& commandBuffer) {
-	SwapChain* s = SwapChain::getSwapChain();
-	VkExtent2D size = s->size();
-	//We define the stride format we need for the mesh here 
-	//each vertex is a 3D position followed by a RGB color
 	
-
-
-
-	VertexShaderModule vertexShader(prefix + "Data/Shaders/Instancing/shader.vert.spv");
-	FragmentShaderModule fragmentShader(prefix + "Data/Shaders/Instancing/shader.frag.spv");
-
-	pipeline = std::make_shared < GraphicPipeline >(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
-	pipeline->setVertexModule(vertexShader);
-	pipeline->setFragmentModule(fragmentShader);
-	pipeline->setVerticesInfo(triangle_vertex_buffer->getBindingDescriptions(), triangle_vertex_buffer->getAttributeDescriptions() ,triangle_vertex_buffer->primitiveTopology());
-	pipeline->setPushContantInfo({ { VK_SHADER_STAGE_VERTEX_BIT, 0, constants[0]->size()  } });
-
-
-	SubpassAttachment SA;
-	SA.showOnScreen = true;
-	SA.nbColor = 1;
-	SA.storeColor = true;
-	SA.useDepth = true;
-	SA.showOnScreenIndex = 0;
-
-	RenderPass* pass = new RenderPass();
-	pass->addSubPass({ pipeline }, SA);
-	pass->addDependencies(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT);
-	pass->addDependencies(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
-	pass->compile();
-
-	return pass;
 	
 }
 
@@ -105,32 +74,62 @@ int main() {
 	triangle->appendIndex(2);
 
 
-	auto model0 = PrepareTranslationMatrix(-0.3f, -0.4f, 0.0f)  * PrepareScalingMatrix(0.3f, 0.3f, 1.0f);
-	auto model1 = PrepareTranslationMatrix(0.3f, -0.5f, 0.0f) * PrepareScalingMatrix(0.3f, 0.3f, 1.0f);
-	auto model2 = PrepareTranslationMatrix(0.3f, 0.5f, 0.0f) * PrepareScalingMatrix(0.3f, 0.3f, 1.0f);
+	auto model0 = PrepareScalingMatrix(0.3f, 0.3f, 1.0f) * PrepareTranslationMatrix(-0.3f, -0.4f, 0.0f)  ;
+	auto model1 = PrepareScalingMatrix(0.3f, 0.3f, 1.0f) * PrepareTranslationMatrix(0.3f, -0.5f, 0.0f) ;
+	auto model2 = PrepareScalingMatrix(0.3f, 0.3f, 1.0f) * PrepareTranslationMatrix(0.3f, 0.5f, 0.0f) ;
 
-	constants[0] = std::make_shared<PushConstant>();
-	constants[0]->addVariable("model", model0);
-	constants[1] = std::make_shared<PushConstant>();
-	constants[1]->addVariable("model", model1);
-	constants[2] = std::make_shared<PushConstant>();
-	constants[2]->addVariable("model", model2);
+	auto model3 = Identity();
+
+
+	UniformBuffer buffer;
+	buffer.addVariable("model0", transpose(model0));
+	buffer.addVariable("model1", transpose(model1));
+	buffer.addVariable("model2", transpose(model2));
+	buffer.end();
+
+	DescriptorSet set;
+	set.addUniformBuffer(buffer, VK_SHADER_STAGE_VERTEX_BIT, 0);
+	set.compile();
+
 
 	//creating an allocating a vertex buffer
 	triangle_vertex_buffer = std::make_shared<VertexBuffer>(queue, commandBuffer, std::vector<std::shared_ptr<Mesh_t>>{ triangle });
 
+	//We define the stride format we need for the mesh here 
+	//each vertex is a 3D position followed by a RGB color
+	
 
-	auto pass = createRenderPass(queue, commandBuffer);
+	VertexShaderModule vertexShader(prefix + "Data/Shaders/Instancing/shader.vert.spv");
+	FragmentShaderModule fragmentShader(prefix + "Data/Shaders/Instancing/shader.frag.spv");
+
+	pipeline = std::make_shared < GraphicPipeline >(vec3f({ 0,0,0 }), vec3f({ float(size.width),float(size.height),1.0f }), vec2f({ 0,0 }), vec2f({ float(size.width),float(size.height) }));
+	pipeline->setVertexModule(vertexShader);
+	pipeline->setFragmentModule(fragmentShader);
+	pipeline->setVerticesInfo(triangle_vertex_buffer->getBindingDescriptions(), triangle_vertex_buffer->getAttributeDescriptions() ,triangle_vertex_buffer->primitiveTopology());
+	pipeline->setDescriptorLayout(set.getLayout());
+	
+
+
+	SubpassAttachment SA;
+	SA.showOnScreen = true;
+	SA.nbColor = 1;
+	SA.storeColor = true;
+	SA.useDepth = true;
+	SA.showOnScreenIndex = 0;
+
+	RenderPass* pass = new RenderPass();
+	pass->addSubPass(SA);
+	pass->addDependencies(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT);
+	pass->addDependencies(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
+	pass->compile();
+
+	pipeline->compile(pass->getHandle(), SA.nbColor);
+
 	
 	FrameBuffer* frameBuffers = new FrameBuffer(size.width, size.height);
 	pass->prepareOutputFrameBuffer(queue, commandBuffer, *frameBuffers);
 
 
-	pipeline->setVertices({
-		{ triangle_vertex_buffer, {{constants[0],VK_SHADER_STAGE_VERTEX_BIT}} },
-		{ triangle_vertex_buffer, {{constants[1],VK_SHADER_STAGE_VERTEX_BIT}} },
-		{ triangle_vertex_buffer, {{constants[2],VK_SHADER_STAGE_VERTEX_BIT}} }
-	});
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
@@ -138,26 +137,9 @@ int main() {
 		VkDevice logical = d->getLogicalDevice();
 		
 
-		commandBuffer.wait(2000000000);
+		commandBuffer.wait();
 		commandBuffer.resetFence();
-
-		if (g_resize) {
-			d->waitForAllCommands();
-			s->resize();
-			size = s->size();
-			delete pass;
-			pass = createRenderPass(queue, commandBuffer);
-			delete frameBuffers;
-			frameBuffers = new FrameBuffer(size.width, size.height);
-			pass->prepareOutputFrameBuffer(queue, commandBuffer, *frameBuffers);
-
-			pipeline->setVertices({
-				{ triangle_vertex_buffer, {{constants[0],{VK_SHADER_STAGE_VERTEX_BIT,0,constants[0]->size()}}}},
-				{ triangle_vertex_buffer, {{constants[1],{VK_SHADER_STAGE_VERTEX_BIT,0,constants[1]->size()}}} },
-				{ triangle_vertex_buffer, {{constants[2],{VK_SHADER_STAGE_VERTEX_BIT,0,constants[2]->size()}}} }
-			});
-			g_resize = false;
-		}
+		
 
 		const SwapChainImage& image = s->acquireImage();
 
@@ -170,10 +152,21 @@ int main() {
 
 		commandBuffer.beginRecord();
 
+		buffer.update(commandBuffer);
 		
 		pass->setSwapChainImage(*frameBuffers, image);
 
-		pass->draw(commandBuffer, *frameBuffers, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
+		pass->begin(commandBuffer, *frameBuffers, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
+
+		pipeline->bindPipeline(commandBuffer);
+		
+		pipeline->bindDescriptorSet(commandBuffer,set);
+		bindVertexBuffer(commandBuffer, *triangle_vertex_buffer->getVertexBuffer());
+		bindIndexBuffer(commandBuffer, *triangle_vertex_buffer->getIndexBuffer());
+
+		drawIndexed(commandBuffer, triangle_vertex_buffer->getIndicesNumber(),0,3);
+
+		pass->end(commandBuffer);
 
 		commandBuffer.endRecord();
 
@@ -181,5 +174,6 @@ int main() {
 
 		s->presentImage(presentQueue, image, { semaphore });
 	}
-	d->waitForAllCommands();
+	commandBuffer.wait();
+	commandBuffer.resetFence();
 }

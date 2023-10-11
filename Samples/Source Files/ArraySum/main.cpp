@@ -7,7 +7,7 @@ using namespace LavaCake::Framework;
 #ifdef __APPLE__
 std::string prefix = "../";
 #else
-std::string prefix = "../";
+std::string prefix = "";
 #endif
 
 int main() {

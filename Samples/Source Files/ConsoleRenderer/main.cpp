@@ -2,6 +2,7 @@
 
 #include <LavaCake/Framework/Framework.h> 
 #include <LavaCake/Geometry/meshLoader.h> 
+#include <LavaCake/Math/basics.h> 
 
 using namespace LavaCake;
 using namespace LavaCake::Geometry;
@@ -23,7 +24,9 @@ int main() {
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-	GLFWwindow* window = glfwCreateWindow(512, 512, "Console renderer", nullptr, nullptr);
+	uint32_t res = 512;
+
+	GLFWwindow* window = glfwCreateWindow(res, res, "Console renderer", nullptr, nullptr);
 
 	GLFWSurfaceInitialisator surfaceInitialisator(window);
 
@@ -85,21 +88,21 @@ int main() {
 	std::shared_ptr<VertexBuffer> quad_vertex_buffer = std::make_shared<VertexBuffer>(queue, commandBuffer[0], std::vector<std::shared_ptr<Mesh_t>>({ quad }));
 
 	//uniform buffer
-	uint32_t shadowsize = 64;
+	uint32_t shadowsize = res/8;
 
 	UniformBuffer b;
-	mat4 proj = PreparePerspectiveProjectionMatrix(static_cast<float>(shadowsize) / static_cast<float>(shadowsize),
+	mat4f proj = PreparePerspectiveProjectionMatrix(static_cast<float>(shadowsize) / static_cast<float>(shadowsize),
 		50.0f, 0.5f, 10.0f);
-	mat4 modelView = mat4 ({ 0.9981f, -0.0450f, 0.0412f, 0.0000f, 0.0000f, 0.6756f, 0.7373f, 0.0000f, -0.0610f, -0.7359f, 0.6743f, 0.0000f, -0.0000f, -0.0000f, -4.0000f, 1.0000f });
-	mat4 lightView = mat4({ 1.0f,0.0f,0.0f,0.0f,0.0f,0.173648223f ,0.984807730f,0.0f,0.0f, -0.984807730f, 0.173648223f ,0.0f,0.0f,0.0f,-3.99999976f ,1.0f });
+	mat4f modelView = mat4f ({ 0.9981f, -0.0450f, 0.0412f, 0.0000f, 0.0000f, 0.6756f, 0.7373f, 0.0000f, -0.0610f, -0.7359f, 0.6743f, 0.0000f, -0.0000f, -0.0000f, -4.0000f, 1.0000f });
+	mat4f lightView = mat4f({ 1.0f,0.0f,0.0f,0.0f,0.0f,0.173648223f ,0.984807730f,0.0f,0.0f, -0.984807730f, 0.173648223f ,0.0f,0.0f,0.0f,-3.99999976f ,1.0f });
 	b.addVariable("ligthView", lightView);
 	b.addVariable("modelView", modelView);
-	b.addVariable("projection", proj);
+	b.addVariable("projection",transpose(proj));
 	b.end();
 
 	//PushConstant
 	std::shared_ptr<PushConstant> constant = std::make_shared<PushConstant>();
-	vec4f LigthPos = vec4f({ 0.f,4.f,0.7f,0.0 });
+	vec4f LigthPos = vec4f({ 0.f,-4.f,-.7f,0.0f });
 	constant->addVariable("LigthPos", LigthPos);
 
 
@@ -119,39 +122,25 @@ int main() {
 	shadowPipeline->setVerticesInfo(scene_vertex_buffer->getBindingDescriptions(), scene_vertex_buffer->getAttributeDescriptions(), scene_vertex_buffer->primitiveTopology());
 
 	
-	DescriptorSet shadowDescriptor;
+	
 
-	shadowPipeline->addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
+	
 
 	SubpassAttachment SA;
 	SA.nbColor = 0;
 	SA.useDepth = true;
 	SA.storeDepth = true;
 
-	shadowMapPass.addSubPass({ shadowPipeline }, SA);
+	shadowMapPass.addSubPass( SA);
 	shadowMapPass.addDependencies(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 	shadowMapPass.addDependencies(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 	shadowMapPass.compile();
 
-	shadowMapPass.prepareOutputFrameBuffer(queue, commandBuffer[0] ,shadow_map_buffer);
+	shadowMapPass.prepareOutputFrameBuffer(queue, commandBuffer[0],shadow_map_buffer);
+
+	
 
 	//Render Pass
-
-	vertexBufferConstant vbc;
-
-	vbc.buffer = scene_vertex_buffer;
-	vbc.constant_ranges.push_back(
-		{
-			constant,
-			{
-				VK_SHADER_STAGE_VERTEX_BIT,
-				0,
-				constant->size()
-			}
-		}
-	);
-
-
 	RenderPass renderPass = RenderPass();
 	std::shared_ptr<GraphicPipeline> renderPipeline = std::make_shared<GraphicPipeline>(vec3f({ 0,0,0 }), vec3f({ float(shadowsize),float(shadowsize),1.0f }), vec2f({ 0,0 }), vec2f({ float(shadowsize),float(shadowsize) }));
 	VertexShaderModule renderVertex(prefix+"Data/Shaders/ConsoleRenderer/scene.vert.spv");
@@ -160,25 +149,16 @@ int main() {
 	FragmentShaderModule renderFrag(prefix+"Data/Shaders/ConsoleRenderer/scene.frag.spv");
 	renderPipeline->setFragmentModule(renderFrag);
 
-	renderPipeline->setPushContantInfo({ {
-				VK_SHADER_STAGE_VERTEX_BIT,
-				0,
-				constant->size()
-			} });
+	renderPipeline->setPushContantInfo({ {VK_SHADER_STAGE_VERTEX_BIT,0,constant->size()}});
 	renderPipeline->setVerticesInfo(scene_vertex_buffer->getBindingDescriptions(), scene_vertex_buffer->getAttributeDescriptions(), scene_vertex_buffer->primitiveTopology());
 	
 	
-	renderPipeline->setVertices({ vbc });
-	renderPipeline->addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
-
-	renderPipeline->addFrameBuffer(shadow_map_buffer, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
-
 	SubpassAttachment SA2;
 	SA2.nbColor = 1;
 	SA2.useDepth = true;
 	SA2.storeColor = true;
 
-	renderPass.addSubPass({ renderPipeline }, SA2);
+	renderPass.addSubPass(SA2);
 	//renderPass.addDependencies(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 	//renderPass.addDependencies(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 	renderPass.compile();
@@ -196,9 +176,6 @@ int main() {
 
 	consolePipeline->setVerticesInfo(quad_vertex_buffer->getBindingDescriptions(), quad_vertex_buffer->getAttributeDescriptions(), quad_vertex_buffer->primitiveTopology());
 
-	consolePipeline->setVertices({ quad_vertex_buffer });
-
-	consolePipeline->addFrameBuffer(scene_buffer, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 
 
 	SubpassAttachment SA3;
@@ -208,7 +185,7 @@ int main() {
 	SA3.useDepth = true;
 	SA3.showOnScreenIndex = 0;
 
-	consolePass.addSubPass({ consolePipeline }, SA3);
+	consolePass.addSubPass(SA3);
 	consolePass.addDependencies(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 	consolePass.addDependencies(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_MEMORY_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT);
 	consolePass.compile();
@@ -219,6 +196,23 @@ int main() {
 		frameBuffers.push_back(new FrameBuffer(s->size().width, s->size().height));
 		consolePass.prepareOutputFrameBuffer(queue, commandBuffer[0] ,*frameBuffers[i]);
 	}
+
+	DescriptorSet shadowDescriptor;
+
+	shadowDescriptor.addUniformBuffer(b, VK_SHADER_STAGE_VERTEX_BIT, 0);
+	shadowDescriptor.addFrameBuffer(shadow_map_buffer,VK_SHADER_STAGE_FRAGMENT_BIT,1);
+	shadowDescriptor.addFrameBuffer(scene_buffer,VK_SHADER_STAGE_FRAGMENT_BIT,2);
+	shadowDescriptor.compile();
+
+	shadowPipeline->setDescriptorLayout(shadowDescriptor.getLayout());
+	shadowPipeline->compile(shadowMapPass.getHandle(),SA.nbColor);
+
+	renderPipeline->setDescriptorLayout(shadowDescriptor.getLayout());
+	renderPipeline->compile(renderPass.getHandle(),SA2.nbColor);
+
+	consolePipeline->setDescriptorLayout(shadowDescriptor.getLayout());
+	consolePipeline->compile(consolePass.getHandle(),SA3.nbColor);
+
 
 
 	bool updateUniformBuffer = true;
@@ -243,11 +237,6 @@ int main() {
 			});
 
 		
-		int state = glfwGetKey(window, GLFW_KEY_SPACE);
-    if (state == GLFW_PRESS) {
-			d->waitForAllCommands();
-		}
-
 
 		/*if (mouse->leftButton) {
 			if (lastMousePos == nullptr) {
@@ -271,7 +260,7 @@ int main() {
 			lastMousePos = nullptr;
 		}*/
 
-		commandBuffer[f].wait(UINT32_MAX);
+		commandBuffer[f].wait();
 		commandBuffer[f].resetFence();
 		commandBuffer[f].beginRecord();
 
@@ -281,22 +270,61 @@ int main() {
 			updateUniformBuffer = false;
 		}
 
-		shadowMapPass.draw(commandBuffer[f], shadow_map_buffer, vec2u({ 0,0 }), vec2u({shadowsize, shadowsize }));
+		shadowMapPass.begin(commandBuffer[f], shadow_map_buffer, vec2u({ 0,0 }), vec2u({shadowsize, shadowsize }), {{ 1.0f, 0 }});
 
-		renderPass.draw(commandBuffer[f], scene_buffer, vec2u({ 0,0 }), scene_buffer.size(), { { 0.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 0 } });
+		shadowPipeline->bindPipeline(commandBuffer[f]);
+		
+		shadowPipeline->bindDescriptorSet(commandBuffer[f],shadowDescriptor);
+		bindVertexBuffer(commandBuffer[f], *scene_vertex_buffer->getVertexBuffer());
+
+		draw(commandBuffer[f], scene_vertex_buffer->getVerticiesNumber());
+		
+		shadowMapPass.end(commandBuffer[f]);
+
+		renderPass.begin(commandBuffer[f], scene_buffer, vec2u({ 0,0 }), vec2u({shadowsize, shadowsize }), {{ 0.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 0 }});
+
+		
+		constant->push(commandBuffer[f], renderPipeline->getPipelineLayout(), {VK_SHADER_STAGE_VERTEX_BIT,0,constant->size()} );
+
+		renderPipeline->bindPipeline(commandBuffer[f]);
+		
+		renderPipeline->bindDescriptorSet(commandBuffer[f],shadowDescriptor);
+		bindVertexBuffer(commandBuffer[f], *scene_vertex_buffer->getVertexBuffer());
+
+		draw(commandBuffer[f], scene_vertex_buffer->getVerticiesNumber());
+		
+		renderPass.end(commandBuffer[f]);
 
 		consolePass.setSwapChainImage(*frameBuffers[f], image);
-		consolePass.draw(commandBuffer[f], *frameBuffers[f], vec2u({ 0,0 }), vec2u({size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
+		consolePass.begin(commandBuffer[f], *frameBuffers[f], vec2u({ 0,0 }), vec2u({size.width, size.height}), {{ 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 }});
 
+		consolePipeline->bindPipeline(commandBuffer[f]);
+		
+		consolePipeline->bindDescriptorSet(commandBuffer[f],shadowDescriptor);
+		bindVertexBuffer(commandBuffer[f], *quad_vertex_buffer->getVertexBuffer());
+		bindIndexBuffer(commandBuffer[f], *quad_vertex_buffer->getIndexBuffer());
+
+		drawIndexed(commandBuffer[f], quad_vertex_buffer->getIndicesNumber());
+		
+		consolePass.end(commandBuffer[f]);
+
+
+		/*renderPass.draw(commandBuffer[f], scene_buffer, vec2u({ 0,0 }), scene_buffer.size(), { { 0.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 0 } });
+		consolePass.setSwapChainImage(*frameBuffers[f], image);
+		consolePass.draw(commandBuffer[f], *frameBuffers[f], vec2u({ 0,0 }), vec2u({size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
+		*/
 		commandBuffer[f].endRecord();
 
 		commandBuffer[f].submit(queue, wait_semaphore_infos, { semaphores[f]});
 	
 
-    s->presentImage(present_queue, image, { semaphores[f] });
+    	s->presentImage(present_queue, image, { semaphores[f] });
 		
 
 	}
-	d->waitForAllCommands();
+
+	commandBuffer[f].wait();
+	commandBuffer[f].resetFence();
+
 }
 

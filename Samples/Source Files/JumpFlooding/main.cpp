@@ -70,9 +70,11 @@ int main() {
 	jumpfloodingSet->addUniformBuffer(passNumber, VK_SHADER_STAGE_COMPUTE_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 
 
+	jumpfloodingSet->compile();
+
 	ComputeShaderModule compute (prefix+"Data/Shaders/JumpFlooding/JumpFlooding.comp.spv");
 	jumpFloodPipeline->setComputeModule(compute);
-	jumpFloodPipeline->setDescriptorSet(jumpfloodingSet);
+	jumpFloodPipeline->setDescriptorLayout(jumpfloodingSet->getLayout());
 	jumpFloodPipeline->compile();
 
 
@@ -106,8 +108,7 @@ int main() {
 	pipeline->setVertexModule(vertexShader);
 	pipeline->setFragmentModule(fragmentShader);
 	pipeline->setVerticesInfo(quad_vertex_buffer->getBindingDescriptions(), quad_vertex_buffer->getAttributeDescriptions(), quad_vertex_buffer->primitiveTopology());
-	pipeline->setVertices({ quad_vertex_buffer });
-	pipeline->setDescriptorSet(jumpfloodingSet);
+	pipeline->setDescriptorLayout(jumpfloodingSet->getLayout());
 
 	SubpassAttachment SA;
 	SA.showOnScreen = true;
@@ -116,9 +117,11 @@ int main() {
 	SA.useDepth = true;
 	SA.showOnScreenIndex = 0;
 
-	showPass->addSubPass({ pipeline }, SA);
+	showPass->addSubPass(SA);
 
 	showPass->compile();
+
+	pipeline->compile(showPass->getHandle(),SA.nbColor);
 
 	FrameBuffer frameBuffer(s->size().width, s->size().height);
 	showPass->prepareOutputFrameBuffer(graphicQueue, cmbBuff, frameBuffer);
@@ -154,14 +157,18 @@ int main() {
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 		if (pass != 0) {
-			cmbBuff.wait(2000000000);
+			cmbBuff.wait();
 		}
 		cmbBuff.resetFence();
 		cmbBuff.beginRecord();
 		passNumber.setVariable("passNumber", pass + 1);
 		passNumber.update(cmbBuff);
+		
+		jumpFloodPipeline->bindPipeline(cmbBuff);
+		jumpFloodPipeline->bindDescriptorSet(cmbBuff, *jumpfloodingSet);
 		jumpFloodPipeline->compute(cmbBuff, 512, 512, 1);
 		LavaCake::vkCmdPipelineBarrier(cmbBuff.getHandle(), VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, (uint32_t)print_memory_barriers.size(), print_memory_barriers.data(), 0, nullptr);
+		
 		cmbBuff.endRecord();
 		cmbBuff.submit(computeQueue, {}, {});
 		
@@ -172,29 +179,42 @@ int main() {
 		wait_semaphore_infos.push_back({
 			image.getSemaphore(),                     // VkSemaphore            Semaphore
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT					// VkPipelineStageFlags   WaitingStage
-			});
+		});
 
 
-		cmbBuff.wait(2000000000);
+		cmbBuff.wait();
 		cmbBuff.resetFence();
 		cmbBuff.beginRecord();
-
-
-		showPass->setSwapChainImage(frameBuffer, image);
-
-
-		showPass->draw(cmbBuff, frameBuffer, vec2u({ 0,0 }), vec2u({ size.width, size.height }), { { 0.1f, 0.2f, 0.3f, 1.0f }, { 1.0f, 0 } });
-		LavaCake::vkCmdPipelineBarrier(cmbBuff.getHandle(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, (uint32_t)seed_memory_barriers.size(), seed_memory_barriers.data(), 0, nullptr);
-
-		cmbBuff.endRecord();
-
-		cmbBuff.submit(graphicQueue, wait_semaphore_infos, { semaphore });
 		
 
+		showPass->setSwapChainImage(frameBuffer, image);
+		cmbBuff.beginRecord();
+		showPass->begin(cmbBuff, 
+			frameBuffer, 
+			vec2u({ 0,0 }), 
+			vec2u({ size.width, size.height }), 
+			{ { 0.1f, 0.2f, 0.3f, 1.0f } });
+
+		pipeline->bindPipeline(cmbBuff);
+
+		bindVertexBuffer(cmbBuff, *quad_vertex_buffer->getVertexBuffer());
+		bindIndexBuffer(cmbBuff, *quad_vertex_buffer->getIndexBuffer());
+
+		pipeline->bindDescriptorSet(cmbBuff, *jumpfloodingSet);
+
+		drawIndexed(cmbBuff, quad_vertex_buffer->getIndicesNumber());
+		
+		showPass->end(cmbBuff);
+		cmbBuff.endRecord();
+		cmbBuff.submit(graphicQueue, wait_semaphore_infos, { semaphore });
+
 		s->presentImage(presentQueue, image, { semaphore });
+
+
+		
 #ifdef _WIN32
 		Sleep(500);
 #endif
 	}
-	d->waitForAllCommands();
+	//d->waitForAllCommands();
 }
