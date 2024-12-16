@@ -51,7 +51,13 @@ FOREACH( shader ${SHADER_SOURCE_FILES} )
 	string(REGEX MATCH "[A-Za-z0-9_\\-]*\\.[A-Za-z0-9]*" FILENAME ${shader})
 	addShader(${shader} ${CMAKE_CURRENT_BINARY_DIR}/Data/Shaders/HelloWorld/${FILENAME}.spv spv1.3)
 endforeach()
+set(entrypoints vertex vertexMain fragment fragmentMain)
+#list(LENGTH entrypoints lenStageName)
+#			message(${lenStageName})
+addSlangShader(${CMAKE_CURRENT_SOURCE_DIR}/Samples/Data/Shaders/helloworld/shader.slang ${CMAKE_CURRENT_BINARY_DIR}/Data/Shaders/helloworld/shader.spv "${entrypoints}")
+addSlangShader(${CMAKE_CURRENT_SOURCE_DIR}/Samples/Data/Shaders/helloworld/shader2.slang ${CMAKE_CURRENT_BINARY_DIR}/Data/Shaders/helloworld/shader2.spv vertex;vMain;fragment;fMain)
 add_executable( HelloWorld  "Samples/Source Files/HelloWorld/main.cpp")
+
 AutoSPIRV(HelloWorld)
 target_link_libraries( HelloWorld LavaCake )
 set_property( TARGET HelloWorld PROPERTY FOLDER "Samples" )
@@ -140,3 +146,6 @@ set_property( TARGET CornellBox PROPERTY FOLDER "Samples" )
 endif()
 
 
+
+add_executable( MathUnitTest  "Samples/Source Files/MathUnitTest/main.cpp")
+target_link_libraries( MathUnitTest LavaCake )

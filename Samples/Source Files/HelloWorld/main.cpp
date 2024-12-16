@@ -57,8 +57,8 @@ int main() {
 		std::vector<std::shared_ptr<Mesh_t>>({ triangle }) 
 	);
 
-	VertexShaderModule vertexShader(prefix + "Data/Shaders/helloworld/shader.vert.spv");
-	FragmentShaderModule fragmentShader(prefix + "Data/Shaders/helloworld/shader.frag.spv");
+	VertexShaderModule vertexShader(prefix + "Data/Shaders/helloworld/shader.spv","vertexMain");
+	FragmentShaderModule fragmentShader(prefix + "Data/Shaders/helloworld/shader.spv", "fragmentMain");
 
 	VkExtent2D size = swapChain->size();
 
@@ -76,15 +76,17 @@ int main() {
 		triangle_vertex_buffer.getBindingDescriptions(), 
 		triangle_vertex_buffer.getAttributeDescriptions(), 
 		triangle_vertex_buffer.primitiveTopology());
+
+	graphicPipeline.setCullMode(VK_CULL_MODE_NONE);
 	
 
 	graphicPipeline.setDescriptorLayout(generateEmptyLayout());
 
 	RenderPass renderPass;
   
-  SubPassAttachments subPass;
+	SubPassAttachments subPass;
   
-  subPass.addSwapChainImageAttachment(swapChain->imageFormat());
+	subPass.addSwapChainImageAttachment(swapChain->imageFormat());
   
 	//SubpassAttachment SA;
 	//SA.showOnScreen = true;
